@@ -11,6 +11,7 @@ import (
 	"github.com/roboco-io/ghp-cli/internal/cmd/field"
 	"github.com/roboco-io/ghp-cli/internal/cmd/item"
 	"github.com/roboco-io/ghp-cli/internal/cmd/project"
+	"github.com/roboco-io/ghp-cli/internal/cmd/view"
 )
 
 var (
@@ -72,6 +73,7 @@ Example:
 	cmd.AddCommand(field.NewFieldCmd())
 	cmd.AddCommand(item.NewItemCmd())
 	cmd.AddCommand(project.NewProjectCmd())
+	cmd.AddCommand(view.NewViewCmd())
 
 	// Initialize config
 	cobra.OnInitialize(initConfig)

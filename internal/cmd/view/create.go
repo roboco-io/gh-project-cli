@@ -1,0 +1,227 @@
+package view
+
+import (
+	"context"
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/spf13/cobra"
+
+	"github.com/roboco-io/ghp-cli/internal/api"
+	"github.com/roboco-io/ghp-cli/internal/api/graphql"
+	"github.com/roboco-io/ghp-cli/internal/auth"
+	"github.com/roboco-io/ghp-cli/internal/service"
+)
+
+// CreateOptions holds options for the create command
+type CreateOptions struct {
+	ProjectRef string
+	Name       string
+	Layout     string
+	Filter     string
+	Format     string
+}
+
+// NewCreateCmd creates the create command
+func NewCreateCmd() *cobra.Command {
+	opts := &CreateOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "create <owner/project-number> <name> <layout>",
+		Short: "Create a new project view",
+		Long: `Create a new view in a GitHub Project.
+
+Views provide different ways to visualize and organize your project data.
+You can create table, board, or roadmap views depending on your needs.
+
+View Layouts:
+  table       - Table view with customizable columns and sorting
+  board       - Kanban board view with swimlanes and cards  
+  roadmap     - Timeline roadmap for milestone planning
+
+Examples:
+  ghp view create octocat/123 "Sprint Dashboard" table
+  ghp view create octocat/123 "Bug Board" board --filter "label:bug"
+  ghp view create --org myorg/456 "Release Roadmap" roadmap
+  ghp view create octocat/123 "High Priority" table --filter "priority:high" --format json`,
+
+		Args: cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			opts.ProjectRef = args[0]
+			opts.Name = args[1]
+			opts.Layout = args[2]
+			opts.Format = cmd.Flag("format").Value.String()
+			return runCreate(cmd.Context(), opts)
+		},
+	}
+
+	cmd.Flags().StringVar(&opts.Filter, "filter", "", "Filter expression for the view")
+	cmd.Flags().Bool("org", false, "Create view in organization project")
+
+	return cmd
+}
+
+func runCreate(ctx context.Context, opts *CreateOptions) error {
+	// Validate view name
+	if err := service.ValidateViewName(opts.Name); err != nil {
+		return err
+	}
+
+	// Validate and normalize layout
+	layout, err := service.ValidateViewLayout(opts.Layout)
+	if err != nil {
+		return err
+	}
+
+	// Parse project reference
+	parts := strings.Split(opts.ProjectRef, "/")
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid project reference format. Use: owner/project-number")
+	}
+
+	owner := parts[0]
+	projectNumber, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return fmt.Errorf("invalid project number: %s", parts[1])
+	}
+
+	// Initialize authentication
+	authManager := auth.NewAuthManager()
+	token, err := authManager.GetValidatedToken()
+	if err != nil {
+		return fmt.Errorf("authentication failed: %w", err)
+	}
+
+	// Create client and services
+	client := api.NewClient(token)
+	projectService := service.NewProjectService(client)
+	viewService := service.NewViewService(client)
+
+	// Get project to validate access and get project ID
+	isOrg := false // TODO: Get this from flag properly
+	project, err := projectService.GetProject(ctx, owner, projectNumber, isOrg)
+	if err != nil {
+		return fmt.Errorf("failed to get project: %w", err)
+	}
+
+	// Create view
+	input := service.CreateViewInput{
+		ProjectID: project.ID,
+		Name:      opts.Name,
+		Layout:    layout,
+	}
+
+	view, err := viewService.CreateView(ctx, input)
+	if err != nil {
+		return fmt.Errorf("failed to create view: %w", err)
+	}
+
+	// Update view with filter if provided
+	if opts.Filter != "" {
+		updateInput := service.UpdateViewInput{
+			ViewID: view.ID,
+			Filter: &opts.Filter,
+		}
+
+		updatedView, err := viewService.UpdateView(ctx, updateInput)
+		if err != nil {
+			// Log warning but don't fail the entire operation
+			fmt.Printf("Warning: View created but failed to set filter: %v\n", err)
+		} else {
+			view = updatedView
+		}
+	}
+
+	// Output created view
+	return outputCreatedView(view, opts.Format)
+}
+
+func outputCreatedView(view *graphql.ProjectV2View, format string) error {
+	switch format {
+	case "json":
+		return outputCreatedViewJSON(view)
+	case "table":
+		return outputCreatedViewTable(view)
+	default:
+		return fmt.Errorf("unknown format: %s", format)
+	}
+}
+
+func outputCreatedViewTable(view *graphql.ProjectV2View) error {
+	fmt.Printf("✅ View '%s' created successfully\n\n", view.Name)
+
+	fmt.Printf("View Details:\n")
+	fmt.Printf("  ID: %s\n", view.ID)
+	fmt.Printf("  Name: %s\n", view.Name)
+	fmt.Printf("  Layout: %s\n", service.FormatViewLayout(view.Layout))
+	fmt.Printf("  Number: %d\n", view.Number)
+
+	if view.Filter != nil && *view.Filter != "" {
+		fmt.Printf("  Filter: %s\n", *view.Filter)
+	}
+
+	if len(view.GroupBy) > 0 {
+		fmt.Printf("  Group By:\n")
+		for _, gb := range view.GroupBy {
+			fmt.Printf("    - %s (%s)\n", gb.Field.Name, service.FormatSortDirection(gb.Direction))
+		}
+	}
+
+	if len(view.SortBy) > 0 {
+		fmt.Printf("  Sort By:\n")
+		for _, sb := range view.SortBy {
+			fmt.Printf("    - %s (%s)\n", sb.Field.Name, service.FormatSortDirection(sb.Direction))
+		}
+	}
+
+	return nil
+}
+
+func outputCreatedViewJSON(view *graphql.ProjectV2View) error {
+	fmt.Printf("{\n")
+	fmt.Printf("  \"id\": \"%s\",\n", view.ID)
+	fmt.Printf("  \"name\": \"%s\",\n", view.Name)
+	fmt.Printf("  \"layout\": \"%s\",\n", view.Layout)
+	fmt.Printf("  \"number\": %d", view.Number)
+
+	if view.Filter != nil {
+		fmt.Printf(",\n  \"filter\": \"%s\"", *view.Filter)
+	}
+
+	if len(view.GroupBy) > 0 {
+		fmt.Printf(",\n  \"groupBy\": [\n")
+		for i, gb := range view.GroupBy {
+			fmt.Printf("    {\n")
+			fmt.Printf("      \"fieldId\": \"%s\",\n", gb.Field.ID)
+			fmt.Printf("      \"fieldName\": \"%s\",\n", gb.Field.Name)
+			fmt.Printf("      \"direction\": \"%s\"\n", gb.Direction)
+			fmt.Printf("    }")
+			if i < len(view.GroupBy)-1 {
+				fmt.Printf(",")
+			}
+			fmt.Printf("\n")
+		}
+		fmt.Printf("  ]")
+	}
+
+	if len(view.SortBy) > 0 {
+		fmt.Printf(",\n  \"sortBy\": [\n")
+		for i, sb := range view.SortBy {
+			fmt.Printf("    {\n")
+			fmt.Printf("      \"fieldId\": \"%s\",\n", sb.Field.ID)
+			fmt.Printf("      \"fieldName\": \"%s\",\n", sb.Field.Name)
+			fmt.Printf("      \"direction\": \"%s\"\n", sb.Direction)
+			fmt.Printf("    }")
+			if i < len(view.SortBy)-1 {
+				fmt.Printf(",")
+			}
+			fmt.Printf("\n")
+		}
+		fmt.Printf("  ]")
+	}
+
+	fmt.Printf("\n}\n")
+
+	return nil
+}
