@@ -91,19 +91,20 @@ module github.com/roboco-io/ghp-cli
 go 1.21
 
 require (
-    github.com/spf13/cobra v1.8.0          // CLI 프레임워크
-    github.com/spf13/viper v1.18.0         // 설정 관리
+    github.com/spf13/cobra v1.9.1          // CLI 프레임워크
+    github.com/spf13/viper v1.20.1         // 설정 관리
     github.com/shurcooL/graphql v0.0.0     // GraphQL 클라이언트
     github.com/charmbracelet/bubbles v0.17.0 // TUI 컴포넌트
-    github.com/charmbracelet/bubbletea v0.25.0 // 대화형 UI
+    github.com/charmbracelet/bubbletea v1.3.6 // 대화형 UI
     github.com/charmbracelet/lipgloss v0.9.0  // 스타일링
     github.com/olekukonko/tablewriter v0.0.5  // 테이블 출력
     github.com/fatih/color v1.16.0         // 컬러 출력
     github.com/briandowns/spinner v1.23.0  // 로딩 인디케이터
     github.com/AlecAivazis/survey/v2 v2.3.7 // 대화형 프롬프트
-    golang.org/x/oauth2 v0.16.0            // OAuth 인증
+    github.com/cli/go-gh v1.2.1            // GitHub CLI 통합
     github.com/patrickmn/go-cache v2.1.0   // 인메모리 캐시
-    github.com/stretchr/testify v1.8.4     // 테스트
+    github.com/stretchr/testify v1.10.0    // 테스트
+    gopkg.in/yaml.v3 v3.0.1               // YAML 처리
 )
 ```
 
@@ -515,10 +516,10 @@ Adding items to project...
 ## 6. 보안 요구사항
 
 ### 6.1 인증
-- GitHub Personal Access Token (PAT)
-- GitHub App 인증
-- OAuth 2.0 Device Flow
-- 토큰 안전 저장 (시스템 키체인)
+- **Primary**: GitHub CLI 토큰 재사용 (gh auth login)
+- **Fallback**: 환경 변수 (GITHUB_TOKEN, GH_TOKEN)
+- GitHub CLI의 키체인/credential store 활용
+- 기존 gh CLI 인증 상태 자동 감지
 
 ### 6.2 권한
 - 최소 권한 원칙

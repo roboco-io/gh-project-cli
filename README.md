@@ -26,15 +26,15 @@ The official GitHub CLI (`gh`) has limited support for GitHub Projects v2. Our a
 ### ✅ Current Features (MVP)
 - **Project Management**: Create, list, view, edit, delete, and copy projects
 - **Basic CLI Structure**: Full cobra-based command structure with configuration
-- **Authentication**: Ready for GitHub PAT, OAuth, and GitHub App authentication
+- **GitHub CLI Integration**: Reuses existing gh CLI authentication seamlessly
 - **Testing & CI/CD**: 100% test coverage with automated testing pipeline
 - **Cross-platform**: Support for macOS, Linux, and Windows
 
 ### 🚧 In Development (See [Issues](https://github.com/roboco-io/ghp-cli/issues))
 
 #### Phase 1: Core (MVP) - Q1 2024
-- [ ] Authentication system (PAT, OAuth, GitHub App)
-- [ ] GraphQL client for GitHub Projects API v2
+- [ ] GitHub CLI authentication integration
+- [ ] GraphQL client for GitHub Projects API v2  
 - [ ] Project management commands
 - [ ] Item management (issues, PRs, drafts)
 - [ ] Field management (text, number, date, select, iteration)
@@ -85,10 +85,12 @@ docker run --rm ghcr.io/roboco-io/ghp-cli:latest --help
 ## Quick Start
 
 ```bash
-# Authentication (choose one method)
+# Authentication - uses existing gh CLI tokens
+gh auth login  # First, authenticate with GitHub CLI
+ghp auth status  # Check authentication status (coming soon)
+
+# Or use environment variables as fallback
 export GITHUB_TOKEN="your-github-token"
-export GH_TOKEN="your-github-token"  # or use existing gh token
-ghp auth login  # interactive OAuth (coming soon)
 
 # List projects
 ghp list --org myorg

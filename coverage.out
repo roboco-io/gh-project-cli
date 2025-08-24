@@ -1,0 +1,21 @@
+mode: atomic
+github.com/roboco-io/ghp-cli/cmd/root.go:21.13,23.2 1 1
+github.com/roboco-io/ghp-cli/cmd/root.go:26.34,69.2 16 8
+github.com/roboco-io/ghp-cli/cmd/root.go:72.37,76.20 4 1
+github.com/roboco-io/ghp-cli/cmd/root.go:76.20,78.3 1 1
+github.com/roboco-io/ghp-cli/cmd/root.go:82.22,84.2 1 1
+github.com/roboco-io/ghp-cli/cmd/root.go:87.19,88.19 1 0
+github.com/roboco-io/ghp-cli/cmd/root.go:88.19,91.3 1 0
+github.com/roboco-io/ghp-cli/cmd/root.go:91.8,94.17 2 0
+github.com/roboco-io/ghp-cli/cmd/root.go:94.17,97.4 2 0
+github.com/roboco-io/ghp-cli/cmd/root.go:100.3,102.30 3 0
+github.com/roboco-io/ghp-cli/cmd/root.go:106.2,110.45 3 0
+github.com/roboco-io/ghp-cli/cmd/root.go:110.45,111.29 1 0
+github.com/roboco-io/ghp-cli/cmd/root.go:111.29,113.4 1 0
+github.com/roboco-io/ghp-cli/cmd/root.go:117.2,117.36 1 0
+github.com/roboco-io/ghp-cli/cmd/root.go:117.36,118.54 1 0
+github.com/roboco-io/ghp-cli/cmd/root.go:118.54,120.4 1 0
+github.com/roboco-io/ghp-cli/cmd/root.go:120.9,120.57 1 0
+github.com/roboco-io/ghp-cli/cmd/root.go:120.57,122.4 1 0
+github.com/roboco-io/ghp-cli/cmd/ghp/main.go:17.13,22.38 2 0
+github.com/roboco-io/ghp-cli/cmd/ghp/main.go:22.38,25.3 2 0
