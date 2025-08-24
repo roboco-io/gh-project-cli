@@ -1,9 +1,14 @@
 package auth
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
+	"strings"
+	"time"
 )
 
 // GitHubCLIAuth handles authentication by integrating with GitHub CLI
@@ -22,11 +27,35 @@ func (g *GitHubCLIAuth) GetToken(hostname string) (string, error) {
 		return "", errors.New("gh CLI is not installed or not available in PATH")
 	}
 
-	// TODO: Implement actual token retrieval from gh CLI
-	// This will involve reading from:
-	// - ~/.config/gh/hosts.yml (config file)
-	// - System keychain/credential store
-	return "", errors.New("not implemented: gh CLI token retrieval")
+	// Use gh CLI to get the token
+	cmd := exec.Command("gh", "auth", "token", "--hostname", hostname)
+	output, err := cmd.Output()
+	if err != nil {
+		// If gh CLI fails, try fallback token
+		if fallbackToken := g.GetFallbackToken(); fallbackToken != "" {
+			return fallbackToken, nil
+		}
+		return "", fmt.Errorf("failed to get token from gh CLI: %w", err)
+	}
+
+	token := strings.TrimSpace(string(output))
+	if token == "" {
+		// If gh CLI returns empty token, try fallback
+		if fallbackToken := g.GetFallbackToken(); fallbackToken != "" {
+			return fallbackToken, nil
+		}
+		return "", errors.New("gh CLI returned empty token")
+	}
+
+	return token, nil
+}
+
+// UserResponse represents the GitHub user API response
+type UserResponse struct {
+	ID    int    `json:"id"`
+	Login string `json:"login"`
+	Name  string `json:"name"`
+	Type  string `json:"type"`
 }
 
 // ValidateToken validates the given token with GitHub API and returns scopes
@@ -35,10 +64,56 @@ func (g *GitHubCLIAuth) ValidateToken(token string) (bool, []string, error) {
 		return false, nil, errors.New("empty token provided")
 	}
 
-	// TODO: Implement GitHub API validation
-	// Make a request to https://api.github.com/user with the token
-	// Parse the X-OAuth-Scopes header to get permissions
-	return false, nil, errors.New("not implemented: token validation")
+	// Create HTTP client with timeout
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	// Make request to GitHub API user endpoint
+	req, err := http.NewRequest("GET", "https://api.github.com/user", http.NoBody)
+	if err != nil {
+		return false, nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Set authorization header
+	req.Header.Set("Authorization", "token "+token)
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", "ghp-cli")
+
+	// Make the request
+	resp, err := client.Do(req)
+	if err != nil {
+		return false, nil, fmt.Errorf("failed to validate token: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check status code
+	if resp.StatusCode == 401 {
+		return false, nil, errors.New("invalid or expired token")
+	}
+	if resp.StatusCode != 200 {
+		return false, nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	// Parse response to ensure token works
+	var user UserResponse
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return false, nil, fmt.Errorf("failed to parse user response: %w", err)
+	}
+
+	// Parse scopes from X-OAuth-Scopes header
+	var scopes []string
+	if scopeHeader := resp.Header.Get("X-OAuth-Scopes"); scopeHeader != "" {
+		scopesList := strings.Split(scopeHeader, ", ")
+		for _, scope := range scopesList {
+			scope = strings.TrimSpace(scope)
+			if scope != "" {
+				scopes = append(scopes, scope)
+			}
+		}
+	}
+
+	return true, scopes, nil
 }
 
 // GetFallbackToken attempts to get token from environment variables
@@ -47,7 +122,7 @@ func (g *GitHubCLIAuth) GetFallbackToken() string {
 	if token := os.Getenv("GH_TOKEN"); token != "" {
 		return token
 	}
-	
+
 	// Fall back to common GitHub token environment variable
 	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
 		return token

@@ -6,6 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/roboco-io/ghp-cli/internal/cmd/auth"
+	"github.com/roboco-io/ghp-cli/internal/cmd/item"
+	"github.com/roboco-io/ghp-cli/internal/cmd/project"
 )
 
 var (
@@ -39,9 +43,9 @@ It provides complete control over GitHub Projects features including:
 - Bulk operations
 
 Example:
-  ghp list --org myorg
-  ghp item add project-123 --issue owner/repo#42
-  ghp report burndown project-123 --sprint current`,
+  ghp project list --org myorg
+  ghp project view owner/123
+  ghp project create "My Project"`,
 		Version: fmt.Sprintf("%s (commit: %s, built: %s)", version, commit, buildTime),
 	}
 
@@ -61,6 +65,11 @@ Example:
 	viper.BindPFlag("format", cmd.PersistentFlags().Lookup("format"))
 	viper.BindPFlag("debug", cmd.PersistentFlags().Lookup("debug"))
 	viper.BindPFlag("no-cache", cmd.PersistentFlags().Lookup("no-cache"))
+
+	// Add subcommands
+	cmd.AddCommand(auth.NewAuthCmd())
+	cmd.AddCommand(item.NewItemCmd())
+	cmd.AddCommand(project.NewProjectCmd())
 
 	// Initialize config
 	cobra.OnInitialize(initConfig)

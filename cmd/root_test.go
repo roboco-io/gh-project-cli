@@ -53,7 +53,7 @@ func TestRootCommand(t *testing.T) {
 		assert.Contains(t, output, "ghp")
 	})
 
-	t.Run("Invalid command shows help", func(t *testing.T) {
+	t.Run("Invalid command shows error", func(t *testing.T) {
 		cmd := NewRootCmd()
 
 		buf := new(bytes.Buffer)
@@ -62,11 +62,9 @@ func TestRootCommand(t *testing.T) {
 		cmd.SetArgs([]string{"invalid-command"})
 
 		err := cmd.Execute()
-		// Should show help instead of error for now since no subcommands are implemented
-		assert.NoError(t, err)
-
-		output := buf.String()
-		assert.Contains(t, output, "ghp")
+		// Should return error for invalid command
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "unknown command")
 	})
 }
 
