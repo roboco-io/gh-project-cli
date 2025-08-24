@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/roboco-io/ghp-cli/internal/cmd/analytics"
 	"github.com/roboco-io/ghp-cli/internal/cmd/auth"
 	"github.com/roboco-io/ghp-cli/internal/cmd/field"
 	"github.com/roboco-io/ghp-cli/internal/cmd/item"
@@ -70,6 +71,7 @@ Example:
 	viper.BindPFlag("no-cache", cmd.PersistentFlags().Lookup("no-cache"))
 
 	// Add subcommands
+	cmd.AddCommand(analytics.NewAnalyticsCmd())
 	cmd.AddCommand(auth.NewAuthCmd())
 	cmd.AddCommand(field.NewFieldCmd())
 	cmd.AddCommand(item.NewItemCmd())
