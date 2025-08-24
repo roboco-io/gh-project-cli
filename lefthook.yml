@@ -1,0 +1,47 @@
+# lefthook.yml - Git hooks configuration
+
+pre-commit:
+  parallel: true
+  commands:
+    fmt:
+      glob: "*.go"
+      run: gofmt -w {staged_files} && git add {staged_files}
+    
+    lint:
+      glob: "*.go"
+      run: golangci-lint run --fix {staged_files} && git add {staged_files}
+    
+    test:
+      glob: "*.go"
+      run: go test -short -race ./...
+    
+    mod-tidy:
+      glob: "go.mod"
+      run: go mod tidy && git add go.mod go.sum
+
+pre-push:
+  parallel: false
+  commands:
+    test-all:
+      run: make test
+    
+    lint-all:
+      run: make lint
+    
+    build:
+      run: make build
+
+commit-msg:
+  commands:
+    check-commit-message:
+      run: |
+        # Check commit message format
+        # Format: type(scope): description
+        # Types: feat, fix, docs, style, refactor, test, chore
+        if ! grep -qE "^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .{1,100}$" "$1"; then
+          echo "Commit message format is invalid!"
+          echo "Format: type(scope): description"
+          echo "Types: feat, fix, docs, style, refactor, test, chore"
+          echo "Example: feat(api): add project list endpoint"
+          exit 1
+        fi

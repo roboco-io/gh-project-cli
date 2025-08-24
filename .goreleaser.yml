@@ -1,0 +1,127 @@
+project_name: ghp-cli
+
+env:
+  - GO111MODULE=on
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - id: "ghp"
+    binary: ghp
+    main: ./cmd/ghp
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+      - "386"
+    goarm:
+      - "7"
+    ignore:
+      - goos: windows
+        goarch: arm64
+      - goos: windows
+        goarch: "386"
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+      - -X main.Commit={{.Commit}}
+      - -X main.BuildTime={{.Date}}
+
+archives:
+  - id: default
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+      - LICENSE
+      - docs/*
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+  groups:
+    - title: "🚀 Features"
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: "🐛 Bug fixes"
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: "📚 Documentation"
+      regexp: "^.*docs[(\\w)]*:+.*$"
+      order: 2
+    - title: "Other work"
+      order: 999
+
+brews:
+  - name: ghp-cli
+    description: "Powerful CLI tool for GitHub Projects"
+    homepage: "https://github.com/roboco-io/ghp-cli"
+    repository:
+      owner: roboco-io
+      name: homebrew-tap
+      branch: main
+    directory: Formula
+    license: "MIT"
+    dependencies:
+      - name: git
+    install: |
+      bin.install "ghp"
+    test: |
+      system "#{bin}/ghp --version"
+
+dockers:
+  - image_templates:
+      - "ghcr.io/roboco-io/ghp-cli:{{ .Version }}"
+      - "ghcr.io/roboco-io/ghp-cli:latest"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+
+nfpms:
+  - id: packages
+    package_name: ghp-cli
+    file_name_template: "{{ .ConventionalFileName }}"
+    vendor: Roboco
+    homepage: https://github.com/roboco-io/ghp-cli
+    maintainer: Roboco <support@roboco.io>
+    description: Powerful CLI tool for GitHub Projects
+    license: MIT
+    formats:
+      - deb
+      - rpm
+      - apk
+    dependencies:
+      - git
+    recommends:
+      - gh
+
+release:
+  github:
+    owner: roboco-io
+    name: ghp-cli
+  discussion_category_name: General
+  prerelease: auto
