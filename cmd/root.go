@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/roboco-io/ghp-cli/internal/cmd/auth"
+	"github.com/roboco-io/ghp-cli/internal/cmd/field"
 	"github.com/roboco-io/ghp-cli/internal/cmd/item"
 	"github.com/roboco-io/ghp-cli/internal/cmd/project"
 )
@@ -68,6 +69,7 @@ Example:
 
 	// Add subcommands
 	cmd.AddCommand(auth.NewAuthCmd())
+	cmd.AddCommand(field.NewFieldCmd())
 	cmd.AddCommand(item.NewItemCmd())
 	cmd.AddCommand(project.NewProjectCmd())
 

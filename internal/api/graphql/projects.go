@@ -52,8 +52,10 @@ const (
 
 // ProjectV2SingleSelectFieldOption represents an option for a single select field
 type ProjectV2SingleSelectFieldOption struct {
-	ID   string `graphql:"id"`
-	Name string `graphql:"name"`
+	ID          string  `graphql:"id"`
+	Name        string  `graphql:"name"`
+	Color       string  `graphql:"color"`
+	Description *string `graphql:"description"`
 }
 
 // ProjectV2Item represents an item in a project
