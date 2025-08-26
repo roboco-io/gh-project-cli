@@ -45,8 +45,8 @@ jobs:
       run: go test -race "-coverprofile=coverage.out" "-covermode=atomic" ./...
     
     - name: Upload coverage to Codecov
-      if: ${{ secrets.CODECOV_TOKEN != '' }}
       uses: codecov/codecov-action@v4
+      continue-on-error: true
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage.out
