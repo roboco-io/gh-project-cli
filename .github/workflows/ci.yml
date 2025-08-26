@@ -42,17 +42,7 @@ jobs:
       run: go mod download
     
     - name: Run tests
-      run: go test -race "-coverprofile=coverage.out" "-covermode=atomic" ./...
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      continue-on-error: true
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./coverage.out
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
+      run: go test -race ./...
 
   lint:
     name: Lint

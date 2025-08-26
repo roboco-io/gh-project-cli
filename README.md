@@ -2,7 +2,6 @@
 
 [![CI](https://github.com/roboco-io/gh-project-cli/workflows/CI/badge.svg)](https://github.com/roboco-io/gh-project-cli/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/roboco-io/gh-project-cli)](https://goreportcard.com/report/github.com/roboco-io/gh-project-cli)
-[![codecov](https://codecov.io/gh/roboco-io/gh-project-cli/branch/main/graph/badge.svg)](https://codecov.io/gh/roboco-io/gh-project-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 > 🚧 **Work in Progress** - This tool is under active development. See [Issues](https://github.com/roboco-io/gh-project-cli/issues) for current status and roadmap.
