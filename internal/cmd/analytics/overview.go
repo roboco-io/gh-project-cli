@@ -2,15 +2,20 @@ package analytics
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
+)
+
+const (
+	overviewPercentageMultiplier = 100.0
 )
 
 // OverviewOptions holds options for the overview command
@@ -102,9 +107,9 @@ func runOverview(ctx context.Context, opts *OverviewOptions) error {
 
 func outputOverview(analytics *service.AnalyticsInfo, format string) error {
 	switch format {
-	case "json":
+	case FormatJSON:
 		return outputOverviewJSON(analytics)
-	case "table":
+	case FormatTable:
 		return outputOverviewTable(analytics)
 	default:
 		return fmt.Errorf("unknown format: %s", format)
@@ -125,7 +130,7 @@ func outputOverviewTable(analytics *service.AnalyticsInfo) error {
 	if len(analytics.StatusStats) > 0 {
 		fmt.Printf("\n📈 Item Distribution by Status:\n")
 		for _, stat := range analytics.StatusStats {
-			percentage := float64(stat.Count) / float64(analytics.ItemCount) * 100
+			percentage := float64(stat.Count) / float64(analytics.ItemCount) * overviewPercentageMultiplier
 			fmt.Printf("  %-20s %3d items (%.1f%%)\n", stat.Status, stat.Count, percentage)
 		}
 	}
@@ -138,7 +143,7 @@ func outputOverviewTable(analytics *service.AnalyticsInfo) error {
 			if assignee == "" {
 				assignee = "Unassigned"
 			}
-			percentage := float64(stat.Count) / float64(analytics.ItemCount) * 100
+			percentage := float64(stat.Count) / float64(analytics.ItemCount) * overviewPercentageMultiplier
 			fmt.Printf("  %-20s %3d items (%.1f%%)\n", assignee, stat.Count, percentage)
 		}
 	}
@@ -148,7 +153,7 @@ func outputOverviewTable(analytics *service.AnalyticsInfo) error {
 		fmt.Printf("\n⚡ Velocity Metrics (%s):\n", analytics.VelocityData.Period)
 		fmt.Printf("  Completed Items: %d\n", analytics.VelocityData.CompletedItems)
 		fmt.Printf("  Added Items: %d\n", analytics.VelocityData.AddedItems)
-		fmt.Printf("  Closure Rate: %.1f%%\n", analytics.VelocityData.ClosureRate*100)
+		fmt.Printf("  Closure Rate: %.1f%%\n", analytics.VelocityData.ClosureRate*overviewPercentageMultiplier)
 		fmt.Printf("  Average Lead Time: %s\n", analytics.VelocityData.LeadTime)
 		fmt.Printf("  Average Cycle Time: %s\n", analytics.VelocityData.CycleTime)
 	}
@@ -173,85 +178,88 @@ func outputOverviewTable(analytics *service.AnalyticsInfo) error {
 }
 
 func outputOverviewJSON(analytics *service.AnalyticsInfo) error {
-	fmt.Printf("{\n")
-	fmt.Printf("  \"projectId\": \"%s\",\n", analytics.ProjectID)
-	fmt.Printf("  \"title\": \"%s\",\n", analytics.Title)
-	fmt.Printf("  \"itemCount\": %d,\n", analytics.ItemCount)
-	fmt.Printf("  \"fieldCount\": %d,\n", analytics.FieldCount)
-	fmt.Printf("  \"viewCount\": %d,\n", analytics.ViewCount)
+	return outputJSONObject(map[string]interface{}{
+		"projectId":            analytics.ProjectID,
+		"title":                analytics.Title,
+		"itemCount":            analytics.ItemCount,
+		"fieldCount":           analytics.FieldCount,
+		"viewCount":            analytics.ViewCount,
+		"statusDistribution":   formatStatusStats(analytics.StatusStats, analytics.ItemCount),
+		"assigneeDistribution": formatAssigneeStats(analytics.AssigneeStats, analytics.ItemCount),
+		"velocity":             formatVelocityData(analytics.VelocityData),
+		"timeline":             formatTimelineData(analytics.TimelineData),
+	})
+}
 
-	// Status statistics
-	if len(analytics.StatusStats) > 0 {
-		fmt.Printf("  \"statusDistribution\": [\n")
-		for i, stat := range analytics.StatusStats {
-			percentage := float64(stat.Count) / float64(analytics.ItemCount) * 100
-			fmt.Printf("    {\n")
-			fmt.Printf("      \"status\": \"%s\",\n", stat.Status)
-			fmt.Printf("      \"count\": %d,\n", stat.Count)
-			fmt.Printf("      \"percentage\": %.1f\n", percentage)
-			if i < len(analytics.StatusStats)-1 {
-				fmt.Printf("    },\n")
-			} else {
-				fmt.Printf("    }\n")
-			}
+func formatStatusStats(stats []service.StatusStat, total int) []map[string]interface{} {
+	result := make([]map[string]interface{}, len(stats))
+	for i, stat := range stats {
+		percentage := float64(stat.Count) / float64(total) * overviewPercentageMultiplier
+		result[i] = map[string]interface{}{
+			"status":     stat.Status,
+			"count":      stat.Count,
+			"percentage": percentage,
 		}
-		fmt.Printf("  ],\n")
 	}
+	return result
+}
 
-	// Assignee statistics
-	if len(analytics.AssigneeStats) > 0 {
-		fmt.Printf("  \"assigneeDistribution\": [\n")
-		for i, stat := range analytics.AssigneeStats {
-			assignee := stat.Assignee
-			if assignee == "" {
-				assignee = "Unassigned"
-			}
-			percentage := float64(stat.Count) / float64(analytics.ItemCount) * 100
-			fmt.Printf("    {\n")
-			fmt.Printf("      \"assignee\": \"%s\",\n", assignee)
-			fmt.Printf("      \"count\": %d,\n", stat.Count)
-			fmt.Printf("      \"percentage\": %.1f\n", percentage)
-			if i < len(analytics.AssigneeStats)-1 {
-				fmt.Printf("    },\n")
-			} else {
-				fmt.Printf("    }\n")
-			}
+func formatAssigneeStats(stats []service.AssigneeStat, total int) []map[string]interface{} {
+	result := make([]map[string]interface{}, len(stats))
+	for i, stat := range stats {
+		assignee := stat.Assignee
+		if assignee == "" {
+			assignee = "Unassigned"
 		}
-		fmt.Printf("  ],\n")
+		percentage := float64(stat.Count) / float64(total) * overviewPercentageMultiplier
+		result[i] = map[string]interface{}{
+			"assignee":   assignee,
+			"count":      stat.Count,
+			"percentage": percentage,
+		}
 	}
+	return result
+}
 
-	// Velocity data
-	if analytics.VelocityData != nil {
-		fmt.Printf("  \"velocity\": {\n")
-		fmt.Printf("    \"period\": \"%s\",\n", analytics.VelocityData.Period)
-		fmt.Printf("    \"completedItems\": %d,\n", analytics.VelocityData.CompletedItems)
-		fmt.Printf("    \"addedItems\": %d,\n", analytics.VelocityData.AddedItems)
-		fmt.Printf("    \"closureRate\": %.3f,\n", analytics.VelocityData.ClosureRate)
-		fmt.Printf("    \"leadTime\": \"%s\",\n", analytics.VelocityData.LeadTime)
-		fmt.Printf("    \"cycleTime\": \"%s\"\n", analytics.VelocityData.CycleTime)
-		fmt.Printf("  },\n")
+func formatVelocityData(velocity *service.VelocityInfo) interface{} {
+	if velocity == nil {
+		return nil
 	}
-
-	// Timeline data
-	if analytics.TimelineData != nil {
-		fmt.Printf("  \"timeline\": {\n")
-		if analytics.TimelineData.StartDate != nil {
-			fmt.Printf("    \"startDate\": \"%s\",\n", *analytics.TimelineData.StartDate)
-		}
-		if analytics.TimelineData.EndDate != nil {
-			fmt.Printf("    \"endDate\": \"%s\",\n", *analytics.TimelineData.EndDate)
-		}
-		if analytics.TimelineData.Duration > 0 {
-			fmt.Printf("    \"duration\": %d,\n", analytics.TimelineData.Duration)
-		}
-		fmt.Printf("    \"milestoneCount\": %d,\n", analytics.TimelineData.MilestoneCount)
-		fmt.Printf("    \"activityCount\": %d\n", analytics.TimelineData.ActivityCount)
-		fmt.Printf("  }\n")
-	} else {
-		// Remove trailing comma
-		fmt.Printf("  \"timeline\": null\n")
+	return map[string]interface{}{
+		"period":         velocity.Period,
+		"completedItems": velocity.CompletedItems,
+		"addedItems":     velocity.AddedItems,
+		"closureRate":    velocity.ClosureRate,
+		"leadTime":       velocity.LeadTime,
+		"cycleTime":      velocity.CycleTime,
 	}
+}
 
-	fmt.Printf("}\n")
+func formatTimelineData(timeline *service.TimelineInfo) interface{} {
+	if timeline == nil {
+		return nil
+	}
+	result := map[string]interface{}{
+		"milestoneCount": timeline.MilestoneCount,
+		"activityCount":  timeline.ActivityCount,
+	}
+	if timeline.StartDate != nil {
+		result["startDate"] = *timeline.StartDate
+	}
+	if timeline.EndDate != nil {
+		result["endDate"] = *timeline.EndDate
+	}
+	if timeline.Duration > 0 {
+		result["duration"] = timeline.Duration
+	}
+	return result
+}
+
+func outputJSONObject(data interface{}) error {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %w", err)
+	}
+	fmt.Println(string(jsonData))
 	return nil
 }

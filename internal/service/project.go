@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
 )
 
 // ProjectService handles project-related operations
@@ -23,29 +23,61 @@ func NewProjectService(client *api.Client) *ProjectService {
 
 // ProjectInfo represents simplified project information for display
 type ProjectInfo struct {
-	ID          string
-	Number      int
-	Title       string
 	Description *string
+	ID          string
+	Title       string
 	URL         string
-	Closed      bool
 	Owner       string
+	Number      int
 	ItemCount   int
 	FieldCount  int
+	Closed      bool
 }
 
 // ListUserProjectsOptions represents options for listing user projects
 type ListUserProjectsOptions struct {
+	After *string
 	Login string
 	First int
-	After *string
 }
 
 // ListOrgProjectsOptions represents options for listing organization projects
 type ListOrgProjectsOptions struct {
+	After *string
 	Login string
 	First int
-	After *string
+}
+
+// convertProjectNodes converts GraphQL project nodes to ProjectInfo slice
+func convertProjectNodes(nodes []graphql.ProjectV2) []ProjectInfo {
+	projects := make([]ProjectInfo, len(nodes))
+	for i := range nodes {
+		project := &nodes[i]
+		projects[i] = ProjectInfo{
+			ID:          project.ID,
+			Number:      project.Number,
+			Title:       project.Title,
+			Description: project.Description,
+			URL:         project.URL,
+			Closed:      project.Closed,
+			Owner:       project.Owner.Login,
+			ItemCount:   len(project.Items.Nodes),
+			FieldCount:  len(project.Fields.Nodes),
+		}
+	}
+	return projects
+}
+
+// buildProjectVariables builds common GraphQL variables for project listing
+func buildProjectVariables(login string, first int, after *string) map[string]interface{} {
+	variables := map[string]interface{}{
+		"login": login,
+		"first": first,
+	}
+	if after != nil {
+		variables["after"] = *after
+	}
+	return variables
 }
 
 // ListUserProjects lists projects for a user
@@ -54,13 +86,7 @@ func (s *ProjectService) ListUserProjects(ctx context.Context, opts ListUserProj
 		opts.First = 10
 	}
 
-	variables := map[string]interface{}{
-		"login": opts.Login,
-		"first": opts.First,
-	}
-	if opts.After != nil {
-		variables["after"] = *opts.After
-	}
+	variables := buildProjectVariables(opts.Login, opts.First, opts.After)
 
 	var query graphql.ListUserProjectsQuery
 	err := s.client.Query(ctx, &query, variables)
@@ -68,22 +94,7 @@ func (s *ProjectService) ListUserProjects(ctx context.Context, opts ListUserProj
 		return nil, fmt.Errorf("failed to list user projects: %w", err)
 	}
 
-	projects := make([]ProjectInfo, len(query.User.ProjectsV2.Nodes))
-	for i, project := range query.User.ProjectsV2.Nodes {
-		projects[i] = ProjectInfo{
-			ID:          project.ID,
-			Number:      project.Number,
-			Title:       project.Title,
-			Description: project.Description,
-			URL:         project.URL,
-			Closed:      project.Closed,
-			Owner:       project.Owner.Login,
-			ItemCount:   len(project.Items.Nodes),
-			FieldCount:  len(project.Fields.Nodes),
-		}
-	}
-
-	return projects, nil
+	return convertProjectNodes(query.User.ProjectsV2.Nodes), nil
 }
 
 // ListOrgProjects lists projects for an organization
@@ -92,13 +103,7 @@ func (s *ProjectService) ListOrgProjects(ctx context.Context, opts ListOrgProjec
 		opts.First = 10
 	}
 
-	variables := map[string]interface{}{
-		"login": opts.Login,
-		"first": opts.First,
-	}
-	if opts.After != nil {
-		variables["after"] = *opts.After
-	}
+	variables := buildProjectVariables(opts.Login, opts.First, opts.After)
 
 	var query graphql.ListOrgProjectsQuery
 	err := s.client.Query(ctx, &query, variables)
@@ -106,22 +111,7 @@ func (s *ProjectService) ListOrgProjects(ctx context.Context, opts ListOrgProjec
 		return nil, fmt.Errorf("failed to list organization projects: %w", err)
 	}
 
-	projects := make([]ProjectInfo, len(query.Organization.ProjectsV2.Nodes))
-	for i, project := range query.Organization.ProjectsV2.Nodes {
-		projects[i] = ProjectInfo{
-			ID:          project.ID,
-			Number:      project.Number,
-			Title:       project.Title,
-			Description: project.Description,
-			URL:         project.URL,
-			Closed:      project.Closed,
-			Owner:       project.Owner.Login,
-			ItemCount:   len(project.Items.Nodes),
-			FieldCount:  len(project.Fields.Nodes),
-		}
-	}
-
-	return projects, nil
+	return convertProjectNodes(query.Organization.ProjectsV2.Nodes), nil
 }
 
 // GetProject gets a specific project by number
@@ -139,20 +129,20 @@ func (s *ProjectService) GetProject(ctx context.Context, owner string, number in
 		}
 
 		return &query.Organization.ProjectV2, nil
-	} else {
-		variables := map[string]interface{}{
-			"userLogin": owner,
-			"number":    number,
-		}
-
-		var query graphql.GetUserProjectQuery
-		err := s.client.Query(ctx, &query, variables)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get user project: %w", err)
-		}
-
-		return &query.User.ProjectV2, nil
 	}
+
+	variables := map[string]interface{}{
+		"userLogin": owner,
+		"number":    number,
+	}
+
+	var query graphql.GetUserProjectQuery
+	err := s.client.Query(ctx, &query, variables)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user project: %w", err)
+	}
+
+	return &query.User.ProjectV2, nil
 }
 
 // CreateProjectInput represents input for creating a project
@@ -179,9 +169,9 @@ func (s *ProjectService) CreateProject(ctx context.Context, input CreateProjectI
 
 // UpdateProjectInput represents input for updating a project
 type UpdateProjectInput struct {
-	ProjectID string
 	Title     *string
 	Closed    *bool
+	ProjectID string
 }
 
 // UpdateProject updates an existing project
@@ -240,10 +230,10 @@ func (s *ProjectService) AddItem(ctx context.Context, input AddItemInput) (*grap
 
 // UpdateItemFieldInput represents input for updating an item field
 type UpdateItemFieldInput struct {
+	Value     interface{}
 	ProjectID string
 	ItemID    string
 	FieldID   string
-	Value     interface{}
 }
 
 // UpdateItemField updates a field value for an item

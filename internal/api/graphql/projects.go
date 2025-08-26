@@ -4,28 +4,25 @@ import "time"
 
 // ProjectV2 represents a GitHub Project v2
 type ProjectV2 struct {
-	ID          string    `graphql:"id"`
-	Title       string    `graphql:"title"`
-	Number      int       `graphql:"number"`
-	Description *string   `graphql:"description"`
-	URL         string    `graphql:"url"`
-	Closed      bool      `graphql:"closed"`
 	CreatedAt   time.Time `graphql:"createdAt"`
 	UpdatedAt   time.Time `graphql:"updatedAt"`
-
-	Owner struct {
+	Description *string   `graphql:"description"`
+	Owner       struct {
 		ID    string `graphql:"id"`
 		Login string `graphql:"login"`
 		Type  string `graphql:"__typename"`
 	} `graphql:"owner"`
-
+	ID     string `graphql:"id"`
+	Title  string `graphql:"title"`
+	URL    string `graphql:"url"`
 	Fields struct {
 		Nodes []ProjectV2Field `graphql:"nodes"`
 	} `graphql:"fields(first: 20)"`
-
 	Items struct {
 		Nodes []ProjectV2Item `graphql:"nodes"`
 	} `graphql:"items(first: 100)"`
+	Number int  `graphql:"number"`
+	Closed bool `graphql:"closed"`
 }
 
 // ProjectV2Field represents a custom field in a project
@@ -52,53 +49,39 @@ const (
 
 // ProjectV2SingleSelectFieldOption represents an option for a single select field
 type ProjectV2SingleSelectFieldOption struct {
+	Description *string `graphql:"description"`
 	ID          string  `graphql:"id"`
 	Name        string  `graphql:"name"`
 	Color       string  `graphql:"color"`
-	Description *string `graphql:"description"`
 }
 
 // ProjectV2Item represents an item in a project
 type ProjectV2Item struct {
-	ID        string    `graphql:"id"`
-	CreatedAt time.Time `graphql:"createdAt"`
-	UpdatedAt time.Time `graphql:"updatedAt"`
-
-	Content struct {
-		TypeName string `graphql:"__typename"`
-
-		// Issue fields
-		IssueTitle  string `graphql:"... on Issue { title }"`
-		IssueNumber int    `graphql:"... on Issue { number }"`
-		IssueURL    string `graphql:"... on Issue { url }"`
-		IssueState  string `graphql:"... on Issue { state }"`
-		IssueClosed bool   `graphql:"... on Issue { closed }"`
-
-		// Pull Request fields
-		PRTitle  string `graphql:"... on PullRequest { title }"`
-		PRNumber int    `graphql:"... on PullRequest { number }"`
-		PRURL    string `graphql:"... on PullRequest { url }"`
-		PRState  string `graphql:"... on PullRequest { state }"`
-		PRClosed bool   `graphql:"... on PullRequest { closed }"`
-
-		// Draft Issue fields
-		DraftTitle string  `graphql:"... on DraftIssue { title }"`
-		DraftBody  *string `graphql:"... on DraftIssue { body }"`
-	} `graphql:"content"`
-
+	CreatedAt   time.Time `graphql:"createdAt"`
+	UpdatedAt   time.Time `graphql:"updatedAt"`
+	ID          string    `graphql:"id"`
 	FieldValues struct {
 		Nodes []ProjectV2ItemFieldValue `graphql:"nodes"`
 	} `graphql:"fieldValues(first: 20)"`
+	Content struct {
+		DraftBody   *string `graphql:"... on DraftIssue { body }"`
+		PRTitle     string  `graphql:"... on PullRequest { title }"`
+		IssueURL    string  `graphql:"... on Issue { url }"`
+		IssueState  string  `graphql:"... on Issue { state }"`
+		TypeName    string  `graphql:"__typename"`
+		PRURL       string  `graphql:"... on PullRequest { url }"`
+		PRState     string  `graphql:"... on PullRequest { state }"`
+		DraftTitle  string  `graphql:"... on DraftIssue { title }"`
+		IssueTitle  string  `graphql:"... on Issue { title }"`
+		IssueNumber int     `graphql:"... on Issue { number }"`
+		PRNumber    int     `graphql:"... on PullRequest { number }"`
+		IssueClosed bool    `graphql:"... on Issue { closed }"`
+		PRClosed    bool    `graphql:"... on PullRequest { closed }"`
+	} `graphql:"content"`
 }
 
 // ProjectV2ItemFieldValue represents a field value for an item
 type ProjectV2ItemFieldValue struct {
-	Field struct {
-		ID   string `graphql:"id"`
-		Name string `graphql:"name"`
-	} `graphql:"field"`
-
-	// Different field types
 	TextValue         *string    `graphql:"... on ProjectV2ItemFieldTextValue { text }"`
 	NumberValue       *float64   `graphql:"... on ProjectV2ItemFieldNumberValue { number }"`
 	DateValue         *time.Time `graphql:"... on ProjectV2ItemFieldDateValue { date }"`
@@ -110,6 +93,10 @@ type ProjectV2ItemFieldValue struct {
 		ID    string `graphql:"id"`
 		Title string `graphql:"title"`
 	} `graphql:"... on ProjectV2ItemFieldIterationValue { iteration }"`
+	Field struct {
+		ID   string `graphql:"id"`
+		Name string `graphql:"name"`
+	} `graphql:"field"`
 }
 
 // Queries
@@ -118,8 +105,8 @@ type ProjectV2ItemFieldValue struct {
 type ListUserProjectsQuery struct {
 	User struct {
 		ProjectsV2 struct {
-			Nodes    []ProjectV2 `graphql:"nodes"`
 			PageInfo PageInfo    `graphql:"pageInfo"`
+			Nodes    []ProjectV2 `graphql:"nodes"`
 		} `graphql:"projectsV2(first: $first, after: $after)"`
 	} `graphql:"user(login: $login)"`
 }
@@ -128,8 +115,8 @@ type ListUserProjectsQuery struct {
 type ListOrgProjectsQuery struct {
 	Organization struct {
 		ProjectsV2 struct {
-			Nodes    []ProjectV2 `graphql:"nodes"`
 			PageInfo PageInfo    `graphql:"pageInfo"`
+			Nodes    []ProjectV2 `graphql:"nodes"`
 		} `graphql:"projectsV2(first: $first, after: $after)"`
 	} `graphql:"organization(login: $login)"`
 }
@@ -150,10 +137,10 @@ type GetUserProjectQuery struct {
 
 // PageInfo represents pagination information
 type PageInfo struct {
-	HasNextPage     bool   `graphql:"hasNextPage"`
-	HasPreviousPage bool   `graphql:"hasPreviousPage"`
 	StartCursor     string `graphql:"startCursor"`
 	EndCursor       string `graphql:"endCursor"`
+	HasNextPage     bool   `graphql:"hasNextPage"`
+	HasPreviousPage bool   `graphql:"hasPreviousPage"`
 }
 
 // Mutations
@@ -210,9 +197,9 @@ type CreateProjectInput struct {
 
 // UpdateProjectInput represents input for updating a project
 type UpdateProjectInput struct {
-	ProjectID string  `json:"projectId"`
 	Title     *string `json:"title,omitempty"`
 	Closed    *bool   `json:"closed,omitempty"`
+	ProjectID string  `json:"projectId"`
 }
 
 // DeleteProjectInput represents input for deleting a project
@@ -228,10 +215,10 @@ type AddItemInput struct {
 
 // UpdateItemFieldInput represents input for updating an item field
 type UpdateItemFieldInput struct {
+	Value     interface{} `json:"value"`
 	ProjectID string      `json:"projectId"`
 	ItemID    string      `json:"itemId"`
 	FieldID   string      `json:"fieldId"`
-	Value     interface{} `json:"value"`
 }
 
 // RemoveItemInput represents input for removing an item from a project

@@ -70,7 +70,7 @@ func TestFieldVariableBuilders(t *testing.T) {
 		assert.NotNil(t, variables)
 		inputVar := variables["input"].(map[string]interface{})
 		assert.Equal(t, ProjectV2FieldDataTypeSingleSelect, inputVar["dataType"])
-		
+
 		options := inputVar["singleSelectOptions"].([]map[string]interface{})
 		assert.Len(t, options, 3)
 		assert.Equal(t, "High", options[0]["name"])
@@ -146,7 +146,7 @@ func TestFieldVariableBuilders(t *testing.T) {
 		newName := "Very High"
 		newColor := SingleSelectColorOrange
 		newDescription := "Very high priority"
-		
+
 		input := UpdateSingleSelectFieldOptionInput{
 			OptionID:    "option-id",
 			Name:        &newName,
@@ -194,7 +194,7 @@ func TestFieldDataTypes(t *testing.T) {
 func TestValidSingleSelectColors(t *testing.T) {
 	t.Run("All valid colors returned", func(t *testing.T) {
 		colors := ValidSingleSelectColors()
-		
+
 		assert.Len(t, colors, 8)
 		assert.Contains(t, colors, SingleSelectColorGray)
 		assert.Contains(t, colors, SingleSelectColorRed)

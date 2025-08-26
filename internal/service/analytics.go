@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
 )
 
 // AnalyticsService handles analytics and reporting operations
@@ -25,13 +25,13 @@ func NewAnalyticsService(client *api.Client) *AnalyticsService {
 
 // ExportProjectInput represents input for project export
 type ExportProjectInput struct {
+	Filter           *string
 	ProjectID        string
 	Format           graphql.ProjectV2ExportFormat
 	IncludeItems     bool
 	IncludeFields    bool
 	IncludeViews     bool
 	IncludeWorkflows bool
-	Filter           *string
 }
 
 // ImportProjectInput represents input for project import
@@ -44,9 +44,9 @@ type ImportProjectInput struct {
 
 // BulkUpdateItemsInput represents input for bulk item update
 type BulkUpdateItemsInput struct {
+	Updates   map[string]interface{}
 	ProjectID string
 	ItemIDs   []string
-	Updates   map[string]interface{}
 }
 
 // BulkDeleteItemsInput represents input for bulk item delete
@@ -258,15 +258,15 @@ func FormatBulkOperationStatus(status graphql.BulkOperationStatus) string {
 
 // AnalyticsInfo represents simplified analytics data for display
 type AnalyticsInfo struct {
+	VelocityData  *VelocityInfo
+	TimelineData  *TimelineInfo
 	ProjectID     string
 	Title         string
+	StatusStats   []StatusStat
+	AssigneeStats []AssigneeStat
 	ItemCount     int
 	FieldCount    int
 	ViewCount     int
-	StatusStats   []StatusStat
-	AssigneeStats []AssigneeStat
-	VelocityData  *VelocityInfo
-	TimelineData  *TimelineInfo
 }
 
 // StatusStat represents status statistics
@@ -284,11 +284,11 @@ type AssigneeStat struct {
 // VelocityInfo represents velocity information
 type VelocityInfo struct {
 	Period         string
+	LeadTime       string
+	CycleTime      string
 	CompletedItems int
 	AddedItems     int
 	ClosureRate    float64
-	LeadTime       string
-	CycleTime      string
 }
 
 // TimelineInfo represents timeline information

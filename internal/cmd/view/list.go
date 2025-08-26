@@ -8,9 +8,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // ListOptions holds options for the list command
@@ -76,11 +76,8 @@ func runList(ctx context.Context, opts *ListOptions) error {
 
 	// Get project to validate access and get project ID
 	isOrg := false
-	if cmd := cobra.CheckErr; cmd != nil {
-		// This is a workaround to access the flag from parent context
-		// In a real implementation, we'd pass this properly
-	}
-	
+	// TODO: Add proper organization flag support in future implementation
+
 	project, err := projectService.GetProject(ctx, owner, projectNumber, isOrg)
 	if err != nil {
 		return fmt.Errorf("failed to get project: %w", err)
@@ -96,7 +93,7 @@ func runList(ctx context.Context, opts *ListOptions) error {
 	return outputViews(views, project.Title, opts.Format)
 }
 
-func outputViews(views []service.ViewInfo, projectName string, format string) error {
+func outputViews(views []service.ViewInfo, projectName, format string) error {
 	switch format {
 	case "json":
 		return outputViewsJSON(views)
@@ -116,11 +113,12 @@ func outputViewsTable(views []service.ViewInfo, projectName string) error {
 	fmt.Printf("Views in project '%s':\n\n", projectName)
 
 	// Find max widths for formatting
-	maxNameWidth := 4 // "Name"
+	maxNameWidth := 4   // "Name"
 	maxLayoutWidth := 6 // "Layout"
 	maxNumberWidth := 6 // "Number"
 
-	for _, view := range views {
+	for i := range views {
+		view := &views[i]
 		if len(view.Name) > maxNameWidth {
 			maxNameWidth = len(view.Name)
 		}
@@ -135,24 +133,25 @@ func outputViewsTable(views []service.ViewInfo, projectName string) error {
 	}
 
 	// Print header
-	fmt.Printf("%-*s  %-*s  %-*s  %s\n", 
+	fmt.Printf("%-*s  %-*s  %-*s  %s\n",
 		maxNumberWidth, "Number",
 		maxNameWidth, "Name",
 		maxLayoutWidth, "Layout",
 		"Filter")
-	
+
 	fmt.Printf("%s  %s  %s  %s\n",
 		strings.Repeat("-", maxNumberWidth),
 		strings.Repeat("-", maxNameWidth),
 		strings.Repeat("-", maxLayoutWidth),
-		strings.Repeat("-", 6))
+		strings.Repeat("-", tableSeparatorWidth))
 
 	// Print views
-	for _, view := range views {
+	for i := range views {
+		view := &views[i]
 		filter := ""
 		if view.Filter != nil {
 			filter = *view.Filter
-			if len(filter) > 50 {
+			if len(filter) > maxDescriptionLength {
 				filter = filter[:47] + "..."
 			}
 		}
@@ -171,56 +170,67 @@ func outputViewsTable(views []service.ViewInfo, projectName string) error {
 
 func outputViewsJSON(views []service.ViewInfo) error {
 	fmt.Printf("[\n")
-	for i, view := range views {
-		fmt.Printf("  {\n")
-		fmt.Printf("    \"id\": \"%s\",\n", view.ID)
-		fmt.Printf("    \"name\": \"%s\",\n", view.Name)
-		fmt.Printf("    \"layout\": \"%s\",\n", view.Layout)
-		fmt.Printf("    \"number\": %d", view.Number)
+	for i := range views {
+		outputViewJSON(&views[i], i < len(views)-1)
+	}
+	fmt.Printf("]\n")
+	return nil
+}
 
-		if view.Filter != nil {
-			fmt.Printf(",\n    \"filter\": \"%s\"", *view.Filter)
-		}
+func outputViewJSON(view *service.ViewInfo, hasNext bool) {
+	fmt.Printf("  {\n")
+	fmt.Printf("    \"id\": \"%s\",\n", view.ID)
+	fmt.Printf("    \"name\": \"%s\",\n", view.Name)
+	fmt.Printf("    \"layout\": \"%s\",\n", view.Layout)
+	fmt.Printf("    \"number\": %d", view.Number)
 
-		if len(view.GroupBy) > 0 {
-			fmt.Printf(",\n    \"groupBy\": [\n")
-			for j, gb := range view.GroupBy {
-				fmt.Printf("      {\n")
-				fmt.Printf("        \"fieldId\": \"%s\",\n", gb.FieldID)
-				fmt.Printf("        \"fieldName\": \"%s\",\n", gb.FieldName)
-				fmt.Printf("        \"direction\": \"%s\"\n", gb.Direction)
-				fmt.Printf("      }")
-				if j < len(view.GroupBy)-1 {
-					fmt.Printf(",")
-				}
-				fmt.Printf("\n")
-			}
-			fmt.Printf("    ]")
-		}
+	if view.Filter != nil {
+		fmt.Printf(",\n    \"filter\": \"%s\"", *view.Filter)
+	}
 
-		if len(view.SortBy) > 0 {
-			fmt.Printf(",\n    \"sortBy\": [\n")
-			for j, sb := range view.SortBy {
-				fmt.Printf("      {\n")
-				fmt.Printf("        \"fieldId\": \"%s\",\n", sb.FieldID)
-				fmt.Printf("        \"fieldName\": \"%s\",\n", sb.FieldName)
-				fmt.Printf("        \"direction\": \"%s\"\n", sb.Direction)
-				fmt.Printf("      }")
-				if j < len(view.SortBy)-1 {
-					fmt.Printf(",")
-				}
-				fmt.Printf("\n")
-			}
-			fmt.Printf("    ]")
-		}
+	if len(view.GroupBy) > 0 {
+		outputGroupByJSON(view.GroupBy)
+	}
 
-		fmt.Printf("\n  }")
-		if i < len(views)-1 {
+	if len(view.SortBy) > 0 {
+		outputSortByJSON(view.SortBy)
+	}
+
+	fmt.Printf("\n  }")
+	if hasNext {
+		fmt.Printf(",")
+	}
+	fmt.Printf("\n")
+}
+
+func outputGroupByJSON(groupBy []service.ViewGroupByInfo) {
+	fmt.Printf(",\n    \"groupBy\": [\n")
+	for j, gb := range groupBy {
+		fmt.Printf("      {\n")
+		fmt.Printf("        \"fieldId\": \"%s\",\n", gb.FieldID)
+		fmt.Printf("        \"fieldName\": \"%s\",\n", gb.FieldName)
+		fmt.Printf("        \"direction\": \"%s\"\n", gb.Direction)
+		fmt.Printf("      }")
+		if j < len(groupBy)-1 {
 			fmt.Printf(",")
 		}
 		fmt.Printf("\n")
 	}
-	fmt.Printf("]\n")
+	fmt.Printf("    ]")
+}
 
-	return nil
+func outputSortByJSON(sortBy []service.ViewSortByInfo) {
+	fmt.Printf(",\n    \"sortBy\": [\n")
+	for j, sb := range sortBy {
+		fmt.Printf("      {\n")
+		fmt.Printf("        \"fieldId\": \"%s\",\n", sb.FieldID)
+		fmt.Printf("        \"fieldName\": \"%s\",\n", sb.FieldName)
+		fmt.Printf("        \"direction\": \"%s\"\n", sb.Direction)
+		fmt.Printf("      }")
+		if j < len(sortBy)-1 {
+			fmt.Printf(",")
+		}
+		fmt.Printf("\n")
+	}
+	fmt.Printf("    ]")
 }

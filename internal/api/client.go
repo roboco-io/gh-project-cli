@@ -27,10 +27,10 @@ const (
 type Client struct {
 	httpClient    *http.Client
 	graphqlClient *graphql.Client
-	token         string
-	baseURL       string
 	rateLimiter   *RateLimiter
 	retryConfig   *RetryConfig
+	token         string
+	baseURL       string
 }
 
 // RetryConfig holds configuration for retry logic
@@ -42,14 +42,14 @@ type RetryConfig struct {
 
 // RateLimiter handles rate limiting for API requests
 type RateLimiter struct {
-	requestsPerSecond int
 	lastRequest       time.Time
+	requestsPerSecond int
 }
 
 // GraphQLRequest represents a GraphQL request
 type GraphQLRequest struct {
-	Query     string                 `json:"query"`
 	Variables map[string]interface{} `json:"variables,omitempty"`
+	Query     string                 `json:"query"`
 }
 
 // GraphQLResponse represents a GraphQL response
@@ -73,15 +73,11 @@ type GraphQLErrorLocation struct {
 
 // NewClient creates a new GraphQL client for GitHub API
 func NewClient(token string) *Client {
-	httpClient := &http.Client{
-		Timeout: DefaultTimeout,
-	}
-
 	// Create GraphQL client with authentication
 	src := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
-	httpClient = oauth2.NewClient(context.Background(), src)
+	httpClient := oauth2.NewClient(context.Background(), src)
 
 	graphqlClient := graphql.NewClient(DefaultAPIURL, httpClient)
 
@@ -192,7 +188,7 @@ func (c *Client) retryOperation(operation func() error) error {
 }
 
 // isRetryableError determines if an error should trigger a retry
-func (c *Client) isRetryableError(err error) bool {
+func (c *Client) isRetryableError(_ error) bool {
 	// TODO: Implement logic to identify retryable errors
 	// e.g., rate limiting, temporary network errors, etc.
 	return false
@@ -210,7 +206,7 @@ func (c *Client) buildRequest(query string, variables map[string]interface{}) (*
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", c.baseURL, bytes.NewBuffer(jsonBody))
+	req, err := http.NewRequestWithContext(context.Background(), "POST", c.baseURL, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}

@@ -8,9 +8,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // ListOptions holds options for the list command
@@ -77,7 +77,7 @@ func runList(ctx context.Context, opts *ListOptions) error {
 	// Get project to validate access and get project ID
 	isOrg := false
 	// TODO: Get this from flag properly
-	
+
 	project, err := projectService.GetProject(ctx, owner, projectNumber, isOrg)
 	if err != nil {
 		return fmt.Errorf("failed to get project: %w", err)
@@ -93,7 +93,7 @@ func runList(ctx context.Context, opts *ListOptions) error {
 	return outputWorkflows(workflows, project.Title, opts.Format)
 }
 
-func outputWorkflows(workflows []service.WorkflowInfo, projectName string, format string) error {
+func outputWorkflows(workflows []service.WorkflowInfo, projectName, format string) error {
 	switch format {
 	case "json":
 		return outputWorkflowsJSON(workflows)
@@ -113,20 +113,20 @@ func outputWorkflowsTable(workflows []service.WorkflowInfo, projectName string) 
 	fmt.Printf("Workflows in project '%s':\n\n", projectName)
 
 	// Find max widths for formatting
-	maxNameWidth := 4 // "Name"
+	maxNameWidth := 4     // "Name"
 	maxTriggersWidth := 8 // "Triggers"
-	maxActionsWidth := 7 // "Actions"
+	maxActionsWidth := 7  // "Actions"
 
 	for _, workflow := range workflows {
 		if len(workflow.Name) > maxNameWidth {
 			maxNameWidth = len(workflow.Name)
 		}
-		
+
 		triggersStr := formatTriggersSummary(workflow.Triggers)
 		if len(triggersStr) > maxTriggersWidth {
 			maxTriggersWidth = len(triggersStr)
 		}
-		
+
 		actionsStr := formatActionsSummary(workflow.Actions)
 		if len(actionsStr) > maxActionsWidth {
 			maxActionsWidth = len(actionsStr)
@@ -134,15 +134,15 @@ func outputWorkflowsTable(workflows []service.WorkflowInfo, projectName string) 
 	}
 
 	// Print header
-	fmt.Printf("%-*s  %-7s  %-*s  %-*s\n", 
+	fmt.Printf("%-*s  %-*s  %-*s  %-*s\n",
 		maxNameWidth, "Name",
-		"Status",
+		tableSeparatorNameWidth, "Status",
 		maxTriggersWidth, "Triggers",
 		maxActionsWidth, "Actions")
-	
+
 	fmt.Printf("%s  %s  %s  %s\n",
 		strings.Repeat("-", maxNameWidth),
-		strings.Repeat("-", 7),
+		strings.Repeat("-", tableSeparatorNameWidth),
 		strings.Repeat("-", maxTriggersWidth),
 		strings.Repeat("-", maxActionsWidth))
 
@@ -154,18 +154,18 @@ func outputWorkflowsTable(workflows []service.WorkflowInfo, projectName string) 
 		}
 
 		triggersStr := formatTriggersSummary(workflow.Triggers)
-		if len(triggersStr) > 50 {
+		if len(triggersStr) > maxTriggerDisplayLength {
 			triggersStr = triggersStr[:47] + "..."
 		}
 
 		actionsStr := formatActionsSummary(workflow.Actions)
-		if len(actionsStr) > 50 {
+		if len(actionsStr) > maxActionDisplayLength {
 			actionsStr = actionsStr[:47] + "..."
 		}
 
-		fmt.Printf("%-*s  %-7s  %-*s  %-*s\n",
+		fmt.Printf("%-*s  %-*s  %-*s  %-*s\n",
 			maxNameWidth, workflow.Name,
-			status,
+			tableSeparatorNameWidth, status,
 			maxTriggersWidth, triggersStr,
 			maxActionsWidth, actionsStr)
 	}
@@ -177,79 +177,98 @@ func outputWorkflowsTable(workflows []service.WorkflowInfo, projectName string) 
 
 func outputWorkflowsJSON(workflows []service.WorkflowInfo) error {
 	fmt.Printf("[\n")
-	for i, workflow := range workflows {
-		fmt.Printf("  {\n")
-		fmt.Printf("    \"id\": \"%s\",\n", workflow.ID)
-		fmt.Printf("    \"name\": \"%s\",\n", workflow.Name)
-		fmt.Printf("    \"enabled\": %t", workflow.Enabled)
-
-		if len(workflow.Triggers) > 0 {
-			fmt.Printf(",\n    \"triggers\": [\n")
-			for j, trigger := range workflow.Triggers {
-				fmt.Printf("      {\n")
-				fmt.Printf("        \"id\": \"%s\",\n", trigger.ID)
-				fmt.Printf("        \"type\": \"%s\"", trigger.Type)
-				
-				if trigger.Event != "" {
-					fmt.Printf(",\n        \"event\": \"%s\"", trigger.Event)
-				}
-				if trigger.FieldName != nil {
-					fmt.Printf(",\n        \"fieldName\": \"%s\"", *trigger.FieldName)
-				}
-				if trigger.Value != nil {
-					fmt.Printf(",\n        \"value\": \"%s\"", *trigger.Value)
-				}
-				
-				fmt.Printf("\n      }")
-				if j < len(workflow.Triggers)-1 {
-					fmt.Printf(",")
-				}
-				fmt.Printf("\n")
-			}
-			fmt.Printf("    ]")
-		}
-
-		if len(workflow.Actions) > 0 {
-			fmt.Printf(",\n    \"actions\": [\n")
-			for j, action := range workflow.Actions {
-				fmt.Printf("      {\n")
-				fmt.Printf("        \"id\": \"%s\",\n", action.ID)
-				fmt.Printf("        \"type\": \"%s\"", action.Type)
-				
-				if action.FieldName != nil {
-					fmt.Printf(",\n        \"fieldName\": \"%s\"", *action.FieldName)
-				}
-				if action.Value != nil {
-					fmt.Printf(",\n        \"value\": \"%s\"", *action.Value)
-				}
-				if action.ViewName != nil {
-					fmt.Printf(",\n        \"viewName\": \"%s\"", *action.ViewName)
-				}
-				if action.Column != nil {
-					fmt.Printf(",\n        \"column\": \"%s\"", *action.Column)
-				}
-				if action.Message != nil {
-					fmt.Printf(",\n        \"message\": \"%s\"", *action.Message)
-				}
-				
-				fmt.Printf("\n      }")
-				if j < len(workflow.Actions)-1 {
-					fmt.Printf(",")
-				}
-				fmt.Printf("\n")
-			}
-			fmt.Printf("    ]")
-		}
-
-		fmt.Printf("\n  }")
-		if i < len(workflows)-1 {
-			fmt.Printf(",")
-		}
-		fmt.Printf("\n")
+	for i := range workflows {
+		outputWorkflowJSON(&workflows[i], i < len(workflows)-1)
 	}
 	fmt.Printf("]\n")
-
 	return nil
+}
+
+func outputWorkflowJSON(workflow *service.WorkflowInfo, addComma bool) {
+	fmt.Printf("  {\n")
+	fmt.Printf("    \"id\": \"%s\",\n", workflow.ID)
+	fmt.Printf("    \"name\": \"%s\",\n", workflow.Name)
+	fmt.Printf("    \"enabled\": %t", workflow.Enabled)
+
+	if len(workflow.Triggers) > 0 {
+		outputWorkflowTriggersJSON(workflow.Triggers)
+	}
+
+	if len(workflow.Actions) > 0 {
+		outputWorkflowActionsJSON(workflow.Actions)
+	}
+
+	fmt.Printf("\n  }")
+	if addComma {
+		fmt.Printf(",")
+	}
+	fmt.Printf("\n")
+}
+
+func outputWorkflowTriggersJSON(triggers []service.TriggerInfo) {
+	fmt.Printf(",\n    \"triggers\": [\n")
+	for j, trigger := range triggers {
+		outputTriggerJSON(trigger, j < len(triggers)-1)
+	}
+	fmt.Printf("    ]")
+}
+
+func outputTriggerJSON(trigger service.TriggerInfo, addComma bool) {
+	fmt.Printf("      {\n")
+	fmt.Printf("        \"id\": \"%s\",\n", trigger.ID)
+	fmt.Printf("        \"type\": \"%s\"", trigger.Type)
+
+	if trigger.Event != "" {
+		fmt.Printf(",\n        \"event\": \"%s\"", trigger.Event)
+	}
+	if trigger.FieldName != nil {
+		fmt.Printf(",\n        \"fieldName\": \"%s\"", *trigger.FieldName)
+	}
+	if trigger.Value != nil {
+		fmt.Printf(",\n        \"value\": \"%s\"", *trigger.Value)
+	}
+
+	fmt.Printf("\n      }")
+	if addComma {
+		fmt.Printf(",")
+	}
+	fmt.Printf("\n")
+}
+
+func outputWorkflowActionsJSON(actions []service.ActionInfo) {
+	fmt.Printf(",\n    \"actions\": [\n")
+	for j := range actions {
+		outputActionJSON(&actions[j], j < len(actions)-1)
+	}
+	fmt.Printf("    ]")
+}
+
+func outputActionJSON(action *service.ActionInfo, addComma bool) {
+	fmt.Printf("      {\n")
+	fmt.Printf("        \"id\": \"%s\",\n", action.ID)
+	fmt.Printf("        \"type\": \"%s\"", action.Type)
+
+	if action.FieldName != nil {
+		fmt.Printf(",\n        \"fieldName\": \"%s\"", *action.FieldName)
+	}
+	if action.Value != nil {
+		fmt.Printf(",\n        \"value\": \"%s\"", *action.Value)
+	}
+	if action.ViewName != nil {
+		fmt.Printf(",\n        \"viewName\": \"%s\"", *action.ViewName)
+	}
+	if action.Column != nil {
+		fmt.Printf(",\n        \"column\": \"%s\"", *action.Column)
+	}
+	if action.Message != nil {
+		fmt.Printf(",\n        \"message\": \"%s\"", *action.Message)
+	}
+
+	fmt.Printf("\n      }")
+	if addComma {
+		fmt.Printf(",")
+	}
+	fmt.Printf("\n")
 }
 
 func formatTriggersSummary(triggers []service.TriggerInfo) string {
@@ -257,7 +276,7 @@ func formatTriggersSummary(triggers []service.TriggerInfo) string {
 		return "None"
 	}
 
-	var parts []string
+	parts := make([]string, 0, len(triggers))
 	for _, trigger := range triggers {
 		parts = append(parts, service.FormatTriggerType(trigger.Type))
 	}
@@ -274,7 +293,7 @@ func formatActionsSummary(actions []service.ActionInfo) string {
 		return "None"
 	}
 
-	var parts []string
+	parts := make([]string, 0, len(actions))
 	for _, action := range actions {
 		parts = append(parts, service.FormatActionType(action.Type))
 	}

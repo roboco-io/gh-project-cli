@@ -150,7 +150,7 @@ ghp report <project-id> --format <format> --output <file>
 brew install ghp-cli
 
 # 또는 바이너리 직접 다운로드
-curl -L https://github.com/roboco-io/ghp-cli/releases/latest/download/ghp-$(uname -s)-$(uname -m) -o /usr/local/bin/ghp
+curl -L https://github.com/roboco-io/gh-project-cli/releases/latest/download/ghp-$(uname -s)-$(uname -m) -o /usr/local/bin/ghp
 chmod +x /usr/local/bin/ghp
 ```
 

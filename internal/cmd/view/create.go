@@ -8,10 +8,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // CreateOptions holds options for the create command
@@ -139,9 +139,9 @@ func runCreate(ctx context.Context, opts *CreateOptions) error {
 
 func outputCreatedView(view *graphql.ProjectV2View, format string) error {
 	switch format {
-	case "json":
+	case formatJSON:
 		return outputCreatedViewJSON(view)
-	case "table":
+	case formatTable:
 		return outputCreatedViewTable(view)
 	default:
 		return fmt.Errorf("unknown format: %s", format)
@@ -150,78 +150,14 @@ func outputCreatedView(view *graphql.ProjectV2View, format string) error {
 
 func outputCreatedViewTable(view *graphql.ProjectV2View) error {
 	fmt.Printf("✅ View '%s' created successfully\n\n", view.Name)
-
 	fmt.Printf("View Details:\n")
-	fmt.Printf("  ID: %s\n", view.ID)
-	fmt.Printf("  Name: %s\n", view.Name)
-	fmt.Printf("  Layout: %s\n", service.FormatViewLayout(view.Layout))
-	fmt.Printf("  Number: %d\n", view.Number)
-
-	if view.Filter != nil && *view.Filter != "" {
-		fmt.Printf("  Filter: %s\n", *view.Filter)
-	}
-
-	if len(view.GroupBy) > 0 {
-		fmt.Printf("  Group By:\n")
-		for _, gb := range view.GroupBy {
-			fmt.Printf("    - %s (%s)\n", gb.Field.Name, service.FormatSortDirection(gb.Direction))
-		}
-	}
-
-	if len(view.SortBy) > 0 {
-		fmt.Printf("  Sort By:\n")
-		for _, sb := range view.SortBy {
-			fmt.Printf("    - %s (%s)\n", sb.Field.Name, service.FormatSortDirection(sb.Direction))
-		}
-	}
-
+	outputViewDetailsTable(view)
 	return nil
 }
 
 func outputCreatedViewJSON(view *graphql.ProjectV2View) error {
 	fmt.Printf("{\n")
-	fmt.Printf("  \"id\": \"%s\",\n", view.ID)
-	fmt.Printf("  \"name\": \"%s\",\n", view.Name)
-	fmt.Printf("  \"layout\": \"%s\",\n", view.Layout)
-	fmt.Printf("  \"number\": %d", view.Number)
-
-	if view.Filter != nil {
-		fmt.Printf(",\n  \"filter\": \"%s\"", *view.Filter)
-	}
-
-	if len(view.GroupBy) > 0 {
-		fmt.Printf(",\n  \"groupBy\": [\n")
-		for i, gb := range view.GroupBy {
-			fmt.Printf("    {\n")
-			fmt.Printf("      \"fieldId\": \"%s\",\n", gb.Field.ID)
-			fmt.Printf("      \"fieldName\": \"%s\",\n", gb.Field.Name)
-			fmt.Printf("      \"direction\": \"%s\"\n", gb.Direction)
-			fmt.Printf("    }")
-			if i < len(view.GroupBy)-1 {
-				fmt.Printf(",")
-			}
-			fmt.Printf("\n")
-		}
-		fmt.Printf("  ]")
-	}
-
-	if len(view.SortBy) > 0 {
-		fmt.Printf(",\n  \"sortBy\": [\n")
-		for i, sb := range view.SortBy {
-			fmt.Printf("    {\n")
-			fmt.Printf("      \"fieldId\": \"%s\",\n", sb.Field.ID)
-			fmt.Printf("      \"fieldName\": \"%s\",\n", sb.Field.Name)
-			fmt.Printf("      \"direction\": \"%s\"\n", sb.Direction)
-			fmt.Printf("    }")
-			if i < len(view.SortBy)-1 {
-				fmt.Printf(",")
-			}
-			fmt.Printf("\n")
-		}
-		fmt.Printf("  ]")
-	}
-
-	fmt.Printf("\n}\n")
-
+	outputViewDetailsJSON(view)
+	fmt.Printf("}\n")
 	return nil
 }

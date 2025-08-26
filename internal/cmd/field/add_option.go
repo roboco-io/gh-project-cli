@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // AddOptionOptions holds options for the add-option command
@@ -99,9 +99,9 @@ func runAddOption(ctx context.Context, opts *AddOptionOptions) error {
 
 func outputCreatedOption(option *graphql.ProjectV2SingleSelectFieldOption, format string) error {
 	switch format {
-	case "json":
+	case formatJSON:
 		return outputCreatedOptionJSON(option)
-	case "table":
+	case formatTable:
 		return outputCreatedOptionTable(option)
 	default:
 		return fmt.Errorf("unknown format: %s", format)
@@ -110,12 +110,12 @@ func outputCreatedOption(option *graphql.ProjectV2SingleSelectFieldOption, forma
 
 func outputCreatedOptionTable(option *graphql.ProjectV2SingleSelectFieldOption) error {
 	fmt.Printf("✅ Option '%s' added successfully\n\n", option.Name)
-	
+
 	fmt.Printf("Option Details:\n")
 	fmt.Printf("  ID: %s\n", option.ID)
 	fmt.Printf("  Name: %s\n", option.Name)
 	fmt.Printf("  Color: %s\n", service.FormatColor(option.Color))
-	
+
 	if option.Description != nil && *option.Description != "" {
 		fmt.Printf("  Description: %s\n", *option.Description)
 	}
@@ -128,11 +128,11 @@ func outputCreatedOptionJSON(option *graphql.ProjectV2SingleSelectFieldOption) e
 	fmt.Printf("  \"id\": \"%s\",\n", option.ID)
 	fmt.Printf("  \"name\": \"%s\",\n", option.Name)
 	fmt.Printf("  \"color\": \"%s\"", option.Color)
-	
+
 	if option.Description != nil {
 		fmt.Printf(",\n  \"description\": \"%s\"", *option.Description)
 	}
-	
+
 	fmt.Printf("\n}\n")
 
 	return nil

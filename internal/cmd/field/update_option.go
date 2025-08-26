@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // UpdateOptionOptions holds options for the update-option command
@@ -120,12 +120,12 @@ func outputUpdatedOption(option *graphql.ProjectV2SingleSelectFieldOption, forma
 
 func outputUpdatedOptionTable(option *graphql.ProjectV2SingleSelectFieldOption) error {
 	fmt.Printf("✅ Option '%s' updated successfully\n\n", option.Name)
-	
+
 	fmt.Printf("Option Details:\n")
 	fmt.Printf("  ID: %s\n", option.ID)
 	fmt.Printf("  Name: %s\n", option.Name)
 	fmt.Printf("  Color: %s\n", service.FormatColor(option.Color))
-	
+
 	if option.Description != nil && *option.Description != "" {
 		fmt.Printf("  Description: %s\n", *option.Description)
 	}
@@ -138,11 +138,11 @@ func outputUpdatedOptionJSON(option *graphql.ProjectV2SingleSelectFieldOption) e
 	fmt.Printf("  \"id\": \"%s\",\n", option.ID)
 	fmt.Printf("  \"name\": \"%s\",\n", option.Name)
 	fmt.Printf("  \"color\": \"%s\"", option.Color)
-	
+
 	if option.Description != nil {
 		fmt.Printf(",\n  \"description\": \"%s\"", *option.Description)
 	}
-	
+
 	fmt.Printf("\n}\n")
 
 	return nil

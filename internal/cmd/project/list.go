@@ -7,19 +7,19 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // ListOptions holds options for the list command
 type ListOptions struct {
 	Owner  string
-	Org    bool
-	User   bool
-	Limit  int
 	State  string
 	Format string
+	Limit  int
+	Org    bool
+	User   bool
 }
 
 // NewListCmd creates the list command
@@ -43,7 +43,7 @@ Examples:
 
 	cmd.Flags().BoolVar(&opts.Org, "org", false, "List organization projects")
 	cmd.Flags().BoolVar(&opts.User, "user", false, "List user projects (default)")
-	cmd.Flags().IntVarP(&opts.Limit, "limit", "L", 10, "Maximum number of projects to list")
+	cmd.Flags().IntVarP(&opts.Limit, "limit", "L", defaultListLimit, "Maximum number of projects to list")
 	cmd.Flags().StringVar(&opts.State, "state", "all", "Filter by state: open, closed, all")
 	cmd.Flags().StringVar(&opts.Format, "format", "table", "Output format: table, json")
 
@@ -109,11 +109,11 @@ func filterProjectsByState(projects []service.ProjectInfo, state string) []servi
 
 	for _, project := range projects {
 		switch state {
-		case "open":
+		case statusOpen:
 			if !project.Closed {
 				filtered = append(filtered, project)
 			}
-		case "closed":
+		case statusClosed:
 			if project.Closed {
 				filtered = append(filtered, project)
 			}
@@ -145,7 +145,7 @@ func outputProjectsTable(projects []service.ProjectInfo) error {
 	// Print header
 	fmt.Printf("%-8s %-30s %-10s %-15s %-10s %-10s\n",
 		"NUMBER", "TITLE", "STATE", "OWNER", "ITEMS", "FIELDS")
-	fmt.Println(strings.Repeat("-", 85))
+	fmt.Println(strings.Repeat("-", tableSeparatorWidth))
 
 	// Print projects
 	for _, project := range projects {
@@ -155,12 +155,12 @@ func outputProjectsTable(projects []service.ProjectInfo) error {
 		}
 
 		title := project.Title
-		if len(title) > 28 {
+		if len(title) > titleMaxLength {
 			title = title[:25] + "..."
 		}
 
 		owner := project.Owner
-		if len(owner) > 13 {
+		if len(owner) > ownerMaxLength {
 			owner = owner[:10] + "..."
 		}
 
@@ -184,7 +184,7 @@ func outputProjectsJSON(projects []service.ProjectInfo) error {
 
 		description := "null"
 		if project.Description != nil {
-			description = fmt.Sprintf("\"%s\"", *project.Description)
+			description = fmt.Sprintf("%q", *project.Description)
 		}
 
 		fmt.Printf("  {\n")

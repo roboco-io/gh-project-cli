@@ -65,7 +65,7 @@ func TestAuthManager(t *testing.T) {
 func TestAuthStatus(t *testing.T) {
 	t.Run("IsReady returns correct status", func(t *testing.T) {
 		// Test fully ready status
-		readyStatus := AuthStatus{
+		readyStatus := Status{
 			TokenAvailable:    true,
 			TokenValid:        true,
 			HasRequiredScopes: true,
@@ -73,7 +73,7 @@ func TestAuthStatus(t *testing.T) {
 		assert.True(t, readyStatus.IsReady())
 
 		// Test not ready status
-		notReadyStatus := AuthStatus{
+		notReadyStatus := Status{
 			TokenAvailable:    true,
 			TokenValid:        false,
 			HasRequiredScopes: true,
@@ -83,12 +83,12 @@ func TestAuthStatus(t *testing.T) {
 
 	t.Run("GetRecommendation provides helpful guidance", func(t *testing.T) {
 		// Test no GH CLI
-		status := AuthStatus{GHCLIInstalled: false}
+		status := Status{GHCLIInstalled: false}
 		rec := status.GetRecommendation()
 		assert.Contains(t, rec, "Install GitHub CLI")
 
 		// Test no token
-		status = AuthStatus{
+		status = Status{
 			GHCLIInstalled: true,
 			TokenAvailable: false,
 		}
@@ -96,7 +96,7 @@ func TestAuthStatus(t *testing.T) {
 		assert.Contains(t, rec, "gh auth login")
 
 		// Test invalid token
-		status = AuthStatus{
+		status = Status{
 			GHCLIInstalled: true,
 			TokenAvailable: true,
 			TokenValid:     false,
@@ -105,7 +105,7 @@ func TestAuthStatus(t *testing.T) {
 		assert.Contains(t, rec, "Re-authenticate")
 
 		// Test missing scopes
-		status = AuthStatus{
+		status = Status{
 			GHCLIInstalled:    true,
 			TokenAvailable:    true,
 			TokenValid:        true,
@@ -115,7 +115,7 @@ func TestAuthStatus(t *testing.T) {
 		assert.Contains(t, rec, "Grant additional scopes")
 
 		// Test all good
-		status = AuthStatus{
+		status = Status{
 			GHCLIInstalled:    true,
 			TokenAvailable:    true,
 			TokenValid:        true,

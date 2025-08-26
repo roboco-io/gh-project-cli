@@ -9,17 +9,17 @@ $ go build -o bin/ghp ./cmd/ghp
 ## Test Results ✅
 ```bash
 $ go test ./...
-?   	github.com/roboco-io/ghp-cli/internal/cmd/auth	[no test files]
-?   	github.com/roboco-io/ghp-cli/internal/cmd/field	[no test files]
-?   	github.com/roboco-io/ghp-cli/internal/cmd/item	[no test files]
-?   	github.com/roboco-io/ghp-cli/internal/cmd/project	[no test files]
-?   	github.com/roboco-io/ghp-cli/pkg/models	[no test files]
-ok  	github.com/roboco-io/ghp-cli/cmd	0.425s
-ok  	github.com/roboco-io/ghp-cli/cmd/ghp	0.679s
-ok  	github.com/roboco-io/ghp-cli/internal/api	(cached)
-ok  	github.com/roboco-io/ghp-cli/internal/api/graphql	0.172s
-ok  	github.com/roboco-io/ghp-cli/internal/auth	(cached)
-ok  	github.com/roboco-io/ghp-cli/internal/service	5.197s
+?   	github.com/roboco-io/gh-project-cli/internal/cmd/auth	[no test files]
+?   	github.com/roboco-io/gh-project-cli/internal/cmd/field	[no test files]
+?   	github.com/roboco-io/gh-project-cli/internal/cmd/item	[no test files]
+?   	github.com/roboco-io/gh-project-cli/internal/cmd/project	[no test files]
+?   	github.com/roboco-io/gh-project-cli/pkg/models	[no test files]
+ok  	github.com/roboco-io/gh-project-cli/cmd	0.425s
+ok  	github.com/roboco-io/gh-project-cli/cmd/ghp	0.679s
+ok  	github.com/roboco-io/gh-project-cli/internal/api	(cached)
+ok  	github.com/roboco-io/gh-project-cli/internal/api/graphql	0.172s
+ok  	github.com/roboco-io/gh-project-cli/internal/auth	(cached)
+ok  	github.com/roboco-io/gh-project-cli/internal/service	5.197s
 ```
 
 ## CLI Functionality Verification ✅

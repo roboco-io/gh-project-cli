@@ -58,7 +58,7 @@ func TestBulkOperationStatusConstants(t *testing.T) {
 		{"Running status", BulkOperationStatusRunning, "RUNNING"},
 		{"Completed status", BulkOperationStatusCompleted, "COMPLETED"},
 		{"Failed status", BulkOperationStatusFailed, "FAILED"},
-		{"Cancelled status", BulkOperationStatusCancelled, "CANCELLED"},
+		{"Canceled status", BulkOperationStatusCancelled, "CANCELED"},
 	}
 
 	for _, tt := range tests {
@@ -72,9 +72,9 @@ func TestBulkOperationStatusConstants(t *testing.T) {
 
 func TestBuildExportProjectVariables(t *testing.T) {
 	tests := []struct {
+		expected map[string]interface{}
 		name     string
 		input    ExportProjectInput
-		expected map[string]interface{}
 	}{
 		{
 			name: "Complete input",
@@ -247,7 +247,7 @@ func TestValidBulkOperationTypes(t *testing.T) {
 }
 
 func TestValidBulkOperationStatuses(t *testing.T) {
-	expected := []string{"PENDING", "RUNNING", "COMPLETED", "FAILED", "CANCELLED"}
+	expected := []string{"PENDING", "RUNNING", "COMPLETED", "FAILED", "CANCELED"}
 	result := ValidBulkOperationStatuses()
 
 	if !reflect.DeepEqual(result, expected) {
@@ -313,7 +313,7 @@ func TestFormatBulkOperationStatus(t *testing.T) {
 		{BulkOperationStatusRunning, "Running"},
 		{BulkOperationStatusCompleted, "Completed"},
 		{BulkOperationStatusFailed, "Failed"},
-		{BulkOperationStatusCancelled, "Cancelled"},
+		{BulkOperationStatusCancelled, "Canceled"},
 		{BulkOperationStatus("UNKNOWN"), "UNKNOWN"},
 	}
 

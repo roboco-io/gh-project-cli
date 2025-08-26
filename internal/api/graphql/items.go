@@ -14,23 +14,17 @@ type Repository struct {
 
 // Issue represents a GitHub issue
 type Issue struct {
-	ID     string `graphql:"id"`
-	Title  string `graphql:"title"`
-	Number int    `graphql:"number"`
-	URL    string `graphql:"url"`
-	State  string `graphql:"state"`
-	Closed bool   `graphql:"closed"`
-
-	Body      string    `graphql:"body"`
-	CreatedAt time.Time `graphql:"createdAt"`
-	UpdatedAt time.Time `graphql:"updatedAt"`
-
-	Author struct {
+	CreatedAt  time.Time  `graphql:"createdAt"`
+	UpdatedAt  time.Time  `graphql:"updatedAt"`
+	Repository Repository `graphql:"repository"`
+	Body       string     `graphql:"body"`
+	State      string     `graphql:"state"`
+	ID         string     `graphql:"id"`
+	URL        string     `graphql:"url"`
+	Author     struct {
 		Login string `graphql:"login"`
 	} `graphql:"author"`
-
-	Repository Repository `graphql:"repository"`
-
+	Title  string `graphql:"title"`
 	Labels struct {
 		Nodes []struct {
 			ID    string `graphql:"id"`
@@ -38,35 +32,29 @@ type Issue struct {
 			Color string `graphql:"color"`
 		} `graphql:"nodes"`
 	} `graphql:"labels(first: 10)"`
-
 	Assignees struct {
 		Nodes []struct {
 			ID    string `graphql:"id"`
 			Login string `graphql:"login"`
 		} `graphql:"nodes"`
 	} `graphql:"assignees(first: 10)"`
+	Number int  `graphql:"number"`
+	Closed bool `graphql:"closed"`
 }
 
 // PullRequest represents a GitHub pull request
 type PullRequest struct {
-	ID     string `graphql:"id"`
-	Title  string `graphql:"title"`
-	Number int    `graphql:"number"`
-	URL    string `graphql:"url"`
-	State  string `graphql:"state"`
-	Closed bool   `graphql:"closed"`
-	Merged bool   `graphql:"merged"`
-
-	Body      string    `graphql:"body"`
-	CreatedAt time.Time `graphql:"createdAt"`
-	UpdatedAt time.Time `graphql:"updatedAt"`
-
-	Author struct {
+	CreatedAt  time.Time  `graphql:"createdAt"`
+	UpdatedAt  time.Time  `graphql:"updatedAt"`
+	Repository Repository `graphql:"repository"`
+	URL        string     `graphql:"url"`
+	State      string     `graphql:"state"`
+	Body       string     `graphql:"body"`
+	ID         string     `graphql:"id"`
+	Author     struct {
 		Login string `graphql:"login"`
 	} `graphql:"author"`
-
-	Repository Repository `graphql:"repository"`
-
+	Title  string `graphql:"title"`
 	Labels struct {
 		Nodes []struct {
 			ID    string `graphql:"id"`
@@ -74,14 +62,12 @@ type PullRequest struct {
 			Color string `graphql:"color"`
 		} `graphql:"nodes"`
 	} `graphql:"labels(first: 10)"`
-
 	Assignees struct {
 		Nodes []struct {
 			ID    string `graphql:"id"`
 			Login string `graphql:"login"`
 		} `graphql:"nodes"`
 	} `graphql:"assignees(first: 10)"`
-
 	ReviewRequests struct {
 		Nodes []struct {
 			RequestedReviewer struct {
@@ -92,6 +78,9 @@ type PullRequest struct {
 			} `graphql:"requestedReviewer"`
 		} `graphql:"nodes"`
 	} `graphql:"reviewRequests(first: 10)"`
+	Number int  `graphql:"number"`
+	Closed bool `graphql:"closed"`
+	Merged bool `graphql:"merged"`
 }
 
 // DraftIssue represents a draft issue in a project
@@ -129,22 +118,22 @@ type GetPullRequestQuery struct {
 // SearchIssuesQuery searches for issues
 type SearchIssuesQuery struct {
 	Search struct {
-		IssueCount int `graphql:"issueCount"`
-		Nodes      []struct {
+		PageInfo PageInfo `graphql:"pageInfo"`
+		Nodes    []struct {
 			Issue Issue `graphql:"... on Issue"`
 		} `graphql:"nodes"`
-		PageInfo PageInfo `graphql:"pageInfo"`
+		IssueCount int `graphql:"issueCount"`
 	} `graphql:"search(query: $query, type: ISSUE, first: $first, after: $after)"`
 }
 
 // SearchPullRequestsQuery searches for pull requests
 type SearchPullRequestsQuery struct {
 	Search struct {
-		IssueCount int `graphql:"issueCount"`
-		Nodes      []struct {
+		PageInfo PageInfo `graphql:"pageInfo"`
+		Nodes    []struct {
 			PullRequest PullRequest `graphql:"... on PullRequest"`
 		} `graphql:"nodes"`
-		PageInfo PageInfo `graphql:"pageInfo"`
+		IssueCount int `graphql:"issueCount"`
 	} `graphql:"search(query: $query, type: ISSUE, first: $first, after: $after)"`
 }
 
@@ -152,8 +141,8 @@ type SearchPullRequestsQuery struct {
 type ListRepositoryIssuesQuery struct {
 	Repository struct {
 		Issues struct {
-			Nodes    []Issue  `graphql:"nodes"`
 			PageInfo PageInfo `graphql:"pageInfo"`
+			Nodes    []Issue  `graphql:"nodes"`
 		} `graphql:"issues(first: $first, after: $after, states: $states, orderBy: {field: UPDATED_AT, direction: DESC})"`
 	} `graphql:"repository(owner: $owner, name: $repo)"`
 }
@@ -162,8 +151,8 @@ type ListRepositoryIssuesQuery struct {
 type ListRepositoryPullRequestsQuery struct {
 	Repository struct {
 		PullRequests struct {
-			Nodes    []PullRequest `graphql:"nodes"`
 			PageInfo PageInfo      `graphql:"pageInfo"`
+			Nodes    []PullRequest `graphql:"nodes"`
 		} `graphql:"pullRequests(first: $first, after: $after, states: $states, orderBy: {field: UPDATED_AT, direction: DESC})"`
 	} `graphql:"repository(owner: $owner, name: $repo)"`
 }
@@ -195,16 +184,16 @@ type DeleteDraftIssueMutation struct {
 
 // CreateDraftIssueInput represents input for creating a draft issue
 type CreateDraftIssueInput struct {
+	Body      *string `json:"body,omitempty"`
 	ProjectID string  `json:"projectId"`
 	Title     string  `json:"title"`
-	Body      *string `json:"body,omitempty"`
 }
 
 // UpdateDraftIssueInput represents input for updating a draft issue
 type UpdateDraftIssueInput struct {
-	DraftIssueID string  `json:"draftIssueId"`
 	Title        *string `json:"title,omitempty"`
 	Body         *string `json:"body,omitempty"`
+	DraftIssueID string  `json:"draftIssueId"`
 }
 
 // DeleteDraftIssueInput represents input for deleting a draft issue
@@ -214,27 +203,27 @@ type DeleteDraftIssueInput struct {
 
 // SearchOptions represents search options for issues/PRs
 type SearchOptions struct {
+	After *string
 	Query string
 	First int
-	After *string
 }
 
 // ListIssueOptions represents options for listing repository issues
 type ListIssueOptions struct {
+	After  *string
 	Owner  string
 	Repo   string
 	States []string
 	First  int
-	After  *string
 }
 
 // ListPullRequestOptions represents options for listing repository pull requests
 type ListPullRequestOptions struct {
+	After  *string
 	Owner  string
 	Repo   string
 	States []string
 	First  int
-	After  *string
 }
 
 // Variable Builders

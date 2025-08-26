@@ -9,16 +9,16 @@ $ go build -o bin/ghp ./cmd/ghp
 ## Test Results ✅
 ```bash
 $ go test ./...
-?   	github.com/roboco-io/ghp-cli/internal/cmd/auth	[no test files]
-?   	github.com/roboco-io/ghp-cli/internal/cmd/item	[no test files]
-?   	github.com/roboco-io/ghp-cli/internal/cmd/project	[no test files]
-?   	github.com/roboco-io/ghp-cli/pkg/models	[no test files]
-ok  	github.com/roboco-io/ghp-cli/cmd	(cached)
-ok  	github.com/roboco-io/ghp-cli/cmd/ghp	(cached)
-ok  	github.com/roboco-io/ghp-cli/internal/api	(cached)
-ok  	github.com/roboco-io/ghp-cli/internal/api/graphql	(cached)
-ok  	github.com/roboco-io/ghp-cli/internal/auth	(cached)
-ok  	github.com/roboco-io/ghp-cli/internal/service	(cached)
+?   	github.com/roboco-io/gh-project-cli/internal/cmd/auth	[no test files]
+?   	github.com/roboco-io/gh-project-cli/internal/cmd/item	[no test files]
+?   	github.com/roboco-io/gh-project-cli/internal/cmd/project	[no test files]
+?   	github.com/roboco-io/gh-project-cli/pkg/models	[no test files]
+ok  	github.com/roboco-io/gh-project-cli/cmd	(cached)
+ok  	github.com/roboco-io/gh-project-cli/cmd/ghp	(cached)
+ok  	github.com/roboco-io/gh-project-cli/internal/api	(cached)
+ok  	github.com/roboco-io/gh-project-cli/internal/api/graphql	(cached)
+ok  	github.com/roboco-io/gh-project-cli/internal/auth	(cached)
+ok  	github.com/roboco-io/gh-project-cli/internal/service	(cached)
 ```
 
 ## CLI Functionality Verification ✅

@@ -48,15 +48,15 @@ type DeleteSingleSelectFieldOptionMutation struct {
 
 // Field input types
 type CreateFieldInput struct {
-	ProjectID  string                 `json:"projectId"`
-	Name       string                 `json:"name"`
-	DataType   ProjectV2FieldDataType `json:"dataType"`
-	SingleSelectOptions []string      `json:"singleSelectOptions,omitempty"`
+	ProjectID           string                 `json:"projectId"`
+	Name                string                 `json:"name"`
+	DataType            ProjectV2FieldDataType `json:"dataType"`
+	SingleSelectOptions []string               `json:"singleSelectOptions,omitempty"`
 }
 
 type UpdateFieldInput struct {
-	FieldID string  `json:"fieldId"`
 	Name    *string `json:"name,omitempty"`
+	FieldID string  `json:"fieldId"`
 }
 
 type DeleteFieldInput struct {
@@ -71,10 +71,10 @@ type CreateSingleSelectFieldOptionInput struct {
 }
 
 type UpdateSingleSelectFieldOptionInput struct {
-	OptionID    string  `json:"singleSelectOptionId"`
 	Name        *string `json:"name,omitempty"`
 	Color       *string `json:"color,omitempty"`
 	Description *string `json:"description,omitempty"`
+	OptionID    string  `json:"singleSelectOptionId"`
 }
 
 type DeleteSingleSelectFieldOptionInput struct {
@@ -173,19 +173,19 @@ func BuildDeleteSingleSelectFieldOptionVariables(input DeleteSingleSelectFieldOp
 
 // Extended field info for display
 type FieldInfo struct {
-	ID          string
-	Name        string
-	DataType    ProjectV2FieldDataType
-	Options     []FieldOptionInfo
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	ID        string
+	Name      string
+	DataType  ProjectV2FieldDataType
+	Options   []FieldOptionInfo
 }
 
 type FieldOptionInfo struct {
+	Description *string
 	ID          string
 	Name        string
 	Color       string
-	Description *string
 }
 
 // Color constants for single select options

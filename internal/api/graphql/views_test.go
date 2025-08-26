@@ -6,6 +6,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	testFieldID = "test-field-id"
+	fieldID     = "field-id"
+)
+
 func TestProjectV2ViewTypes(t *testing.T) {
 	t.Run("ProjectV2ViewLayout constants", func(t *testing.T) {
 		assert.Equal(t, ProjectV2ViewLayout("TABLE_VIEW"), ProjectV2ViewLayoutTable)
@@ -115,7 +120,7 @@ func TestViewVariableBuilders(t *testing.T) {
 	})
 
 	t.Run("BuildUpdateViewSortByVariables creates proper variables", func(t *testing.T) {
-		sortByID := "test-field-id"
+		sortByID := testFieldID
 		input := UpdateViewSortByInput{
 			ViewID:    "test-view-id",
 			SortByID:  &sortByID,
@@ -127,7 +132,7 @@ func TestViewVariableBuilders(t *testing.T) {
 		expected := map[string]interface{}{
 			"input": map[string]interface{}{
 				"viewId":    "test-view-id",
-				"sortById":  "test-field-id",
+				"sortById":  testFieldID,
 				"direction": ProjectV2ViewSortDirectionASC,
 			},
 		}
@@ -154,7 +159,7 @@ func TestViewVariableBuilders(t *testing.T) {
 	})
 
 	t.Run("BuildUpdateViewGroupByVariables creates proper variables", func(t *testing.T) {
-		groupByID := "test-field-id"
+		groupByID := testFieldID
 		input := UpdateViewGroupByInput{
 			ViewID:    "test-view-id",
 			GroupByID: &groupByID,
@@ -166,7 +171,7 @@ func TestViewVariableBuilders(t *testing.T) {
 		expected := map[string]interface{}{
 			"input": map[string]interface{}{
 				"viewId":    "test-view-id",
-				"groupById": "test-field-id",
+				"groupById": testFieldID,
 				"direction": ProjectV2ViewSortDirectionASC,
 			},
 		}
@@ -250,10 +255,10 @@ func TestViewStructures(t *testing.T) {
 		groupBy := ProjectV2ViewGroupBy{
 			Direction: ProjectV2ViewSortDirectionASC,
 		}
-		groupBy.Field.ID = "field-id"
+		groupBy.Field.ID = fieldID
 		groupBy.Field.Name = "Status"
 
-		assert.Equal(t, "field-id", groupBy.Field.ID)
+		assert.Equal(t, fieldID, groupBy.Field.ID)
 		assert.Equal(t, "Status", groupBy.Field.Name)
 		assert.Equal(t, ProjectV2ViewSortDirectionASC, groupBy.Direction)
 	})
@@ -262,10 +267,10 @@ func TestViewStructures(t *testing.T) {
 		sortBy := ProjectV2ViewSortBy{
 			Direction: ProjectV2ViewSortDirectionDESC,
 		}
-		sortBy.Field.ID = "field-id"
+		sortBy.Field.ID = fieldID
 		sortBy.Field.Name = "Priority"
 
-		assert.Equal(t, "field-id", sortBy.Field.ID)
+		assert.Equal(t, fieldID, sortBy.Field.ID)
 		assert.Equal(t, "Priority", sortBy.Field.Name)
 		assert.Equal(t, ProjectV2ViewSortDirectionDESC, sortBy.Direction)
 	})
@@ -277,14 +282,14 @@ func TestViewStructures(t *testing.T) {
 			Width:    200,
 			IsHidden: false,
 		}
-		column.Field.ID = "field-id"
+		column.Field.ID = fieldID
 		column.Field.Name = "Field Name"
 
 		assert.Equal(t, "column-id", column.ID)
 		assert.Equal(t, "Column Name", column.Name)
 		assert.Equal(t, 200, column.Width)
 		assert.False(t, column.IsHidden)
-		assert.Equal(t, "field-id", column.Field.ID)
+		assert.Equal(t, fieldID, column.Field.ID)
 		assert.Equal(t, "Field Name", column.Field.Name)
 	})
 }

@@ -8,21 +8,21 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // EditOptions holds options for the edit command
 type EditOptions struct {
 	Owner  string
+	Title  string
+	Format string
 	Number int
 	Org    bool
-	Title  string
 	Close  bool
 	Reopen bool
-	Format string
 }
 
 // NewEditCmd creates the edit command
@@ -131,7 +131,7 @@ func runEdit(ctx context.Context, opts *EditOptions, args []string) error {
 
 func outputUpdatedProject(project *graphql.ProjectV2, format string) error {
 	switch format {
-	case "json":
+	case formatJSON:
 		return outputProjectDetailsJSON(project)
 	case "details":
 		fmt.Printf("Project #%d\n", project.Number)

@@ -6,19 +6,19 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // CreateOptions holds options for the create command
 type CreateOptions struct {
 	Title   string
 	OwnerID string
+	Format  string
 	Org     bool
 	Web     bool
-	Format  string
 }
 
 // NewCreateCmd creates the create command
@@ -98,9 +98,9 @@ func runCreate(ctx context.Context, opts *CreateOptions, args []string) error {
 
 func outputCreatedProject(project *graphql.ProjectV2, format string) error {
 	switch format {
-	case "json":
+	case formatJSON:
 		return outputProjectDetailsJSON(project)
-	case "details":
+	case formatDetails:
 		fmt.Printf("Project #%d\n", project.Number)
 		fmt.Printf("Title: %s\n", project.Title)
 

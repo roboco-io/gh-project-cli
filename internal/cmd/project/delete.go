@@ -8,9 +8,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // DeleteOptions holds options for the delete command
@@ -100,7 +100,11 @@ func runDelete(ctx context.Context, opts *DeleteOptions, args []string) error {
 		fmt.Printf("Type 'DELETE' to confirm: ")
 
 		var confirmation string
-		fmt.Scanln(&confirmation)
+		_, scanErr := fmt.Scanln(&confirmation)
+		if scanErr != nil {
+			fmt.Println("❌ Failed to read confirmation.")
+			return scanErr
+		}
 
 		if confirmation != "DELETE" {
 			fmt.Println("❌ Deletion canceled.")

@@ -8,18 +8,18 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // CreateOptions holds options for the create command
 type CreateOptions struct {
 	ProjectRef string
 	Name       string
-	Enabled    bool
 	Format     string
+	Enabled    bool
 }
 
 // NewCreateCmd creates the create command
@@ -113,9 +113,9 @@ func runCreate(ctx context.Context, opts *CreateOptions) error {
 
 func outputCreatedWorkflow(workflow *graphql.ProjectV2Workflow, format string) error {
 	switch format {
-	case "json":
+	case formatJSON:
 		return outputCreatedWorkflowJSON(workflow)
-	case "table":
+	case formatTable:
 		return outputCreatedWorkflowTable(workflow)
 	default:
 		return fmt.Errorf("unknown format: %s", format)
@@ -125,27 +125,7 @@ func outputCreatedWorkflow(workflow *graphql.ProjectV2Workflow, format string) e
 func outputCreatedWorkflowTable(workflow *graphql.ProjectV2Workflow) error {
 	fmt.Printf("✅ Workflow '%s' created successfully\n\n", workflow.Name)
 
-	fmt.Printf("Workflow Details:\n")
-	fmt.Printf("  ID: %s\n", workflow.ID)
-	fmt.Printf("  Name: %s\n", workflow.Name)
-	
-	status := "Enabled"
-	if !workflow.Enabled {
-		status = "Disabled"
-	}
-	fmt.Printf("  Status: %s\n", status)
-
-	if len(workflow.Triggers) > 0 {
-		fmt.Printf("  Triggers: %d configured\n", len(workflow.Triggers))
-	} else {
-		fmt.Printf("  Triggers: None (add triggers with 'ghp workflow add-trigger')\n")
-	}
-
-	if len(workflow.Actions) > 0 {
-		fmt.Printf("  Actions: %d configured\n", len(workflow.Actions))
-	} else {
-		fmt.Printf("  Actions: None (add actions with 'ghp workflow add-action')\n")
-	}
+	outputWorkflowDetails(workflow)
 
 	return nil
 }

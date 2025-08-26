@@ -6,19 +6,24 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
+)
+
+const (
+	maxDisplayTitleLength  = 80
+	addTitleTruncateLength = 77
 )
 
 // AddOptions holds options for the add command
 type AddOptions struct {
 	ProjectRef string
 	ItemRef    string
-	Draft      bool
 	Title      string
 	Body       string
 	Format     string
+	Draft      bool
 }
 
 // NewAddCmd creates the add command
@@ -59,8 +64,7 @@ Examples:
 	return cmd
 }
 
-func runAdd(ctx context.Context, opts *AddOptions) error {
-	// Validate options
+func validateAddOptions(opts *AddOptions) error {
 	if opts.Draft {
 		if opts.Title == "" {
 			return fmt.Errorf("title is required when creating draft issue (use --title)")
@@ -68,10 +72,72 @@ func runAdd(ctx context.Context, opts *AddOptions) error {
 		if opts.ItemRef != "" {
 			return fmt.Errorf("cannot specify both --draft and item reference")
 		}
+	} else if opts.ItemRef == "" {
+		return fmt.Errorf("item reference is required (or use --draft to create draft issue)")
+	}
+	return nil
+}
+
+func setupAddServices(_ context.Context) (*api.Client, *service.ItemService, *service.ProjectService, error) {
+	authManager := auth.NewAuthManager()
+	token, err := authManager.GetValidatedToken()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("authentication failed: %w", err)
+	}
+
+	client := api.NewClient(token)
+	itemService := service.NewItemService(client)
+	projectService := service.NewProjectService(client)
+
+	return client, itemService, projectService, nil
+}
+
+func addDraftIssue(ctx context.Context, itemService *service.ItemService, projectID, title string, body *string, format string) error {
+	item, err := itemService.CreateDraftIssue(ctx, projectID, title, body)
+	if err != nil {
+		return fmt.Errorf("failed to create draft issue: %w", err)
+	}
+
+	fmt.Printf("✅ Draft issue created and added to project!\n\n")
+	return outputAddedItem(item, format, "DraftIssue", title)
+}
+
+func addExistingItem(ctx context.Context, itemService *service.ItemService, projectID, itemRef, format string) error {
+	itemOwner, itemRepo, itemNumber, err := service.ParseItemReference(itemRef)
+	if err != nil {
+		return fmt.Errorf("invalid item reference: %w", err)
+	}
+
+	var contentID, itemType, itemTitle string
+
+	// Try to get as issue first, then as PR
+	issue, err := itemService.GetIssue(ctx, itemOwner, itemRepo, itemNumber)
+	if err == nil {
+		contentID = issue.ID
+		itemType = "Issue"
+		itemTitle = issue.Title
 	} else {
-		if opts.ItemRef == "" {
-			return fmt.Errorf("item reference is required (or use --draft to create draft issue)")
+		pr, prErr := itemService.GetPullRequest(ctx, itemOwner, itemRepo, itemNumber)
+		if prErr != nil {
+			return fmt.Errorf("failed to find issue or pull request: %w", prErr)
 		}
+		contentID = pr.ID
+		itemType = "PullRequest"
+		itemTitle = pr.Title
+	}
+
+	item, err := itemService.AddItemToProject(ctx, projectID, contentID)
+	if err != nil {
+		return fmt.Errorf("failed to add item to project: %w", err)
+	}
+
+	fmt.Printf("✅ %s added to project!\n\n", itemType)
+	return outputAddedItem(item, format, itemType, itemTitle)
+}
+
+func runAdd(ctx context.Context, opts *AddOptions) error {
+	if err := validateAddOptions(opts); err != nil {
+		return err
 	}
 
 	// Parse project reference
@@ -80,17 +146,11 @@ func runAdd(ctx context.Context, opts *AddOptions) error {
 		return fmt.Errorf("invalid project reference: %w", err)
 	}
 
-	// Initialize authentication
-	authManager := auth.NewAuthManager()
-	token, err := authManager.GetValidatedToken()
+	// Setup services
+	_, itemService, projectService, err := setupAddServices(ctx)
 	if err != nil {
-		return fmt.Errorf("authentication failed: %w", err)
+		return err
 	}
-
-	// Create client and services
-	client := api.NewClient(token)
-	itemService := service.NewItemService(client)
-	projectService := service.NewProjectService(client)
 
 	// Get project details to obtain project ID
 	project, err := projectService.GetProject(ctx, projectOwner, projectNumber, false) // TODO: detect org vs user
@@ -99,63 +159,21 @@ func runAdd(ctx context.Context, opts *AddOptions) error {
 	}
 
 	if opts.Draft {
-		// Create draft issue
 		var body *string
 		if opts.Body != "" {
 			body = &opts.Body
 		}
-
-		item, err := itemService.CreateDraftIssue(ctx, project.ID, opts.Title, body)
-		if err != nil {
-			return fmt.Errorf("failed to create draft issue: %w", err)
-		}
-
-		fmt.Printf("✅ Draft issue created and added to project!\n\n")
-		return outputAddedItem(item, opts.Format, "DraftIssue", opts.Title)
-	} else {
-		// Parse item reference and get item details
-		itemOwner, itemRepo, itemNumber, err := service.ParseItemReference(opts.ItemRef)
-		if err != nil {
-			return fmt.Errorf("invalid item reference: %w", err)
-		}
-
-		// Try to get as issue first, then as PR
-		var contentID string
-		var itemType string
-		var itemTitle string
-
-		issue, err := itemService.GetIssue(ctx, itemOwner, itemRepo, itemNumber)
-		if err == nil {
-			contentID = issue.ID
-			itemType = "Issue"
-			itemTitle = issue.Title
-		} else {
-			// Try as pull request
-			pr, err := itemService.GetPullRequest(ctx, itemOwner, itemRepo, itemNumber)
-			if err != nil {
-				return fmt.Errorf("failed to find issue or pull request: %w", err)
-			}
-			contentID = pr.ID
-			itemType = "PullRequest"
-			itemTitle = pr.Title
-		}
-
-		// Add item to project
-		item, err := itemService.AddItemToProject(ctx, project.ID, contentID)
-		if err != nil {
-			return fmt.Errorf("failed to add item to project: %w", err)
-		}
-
-		fmt.Printf("✅ %s added to project!\n\n", itemType)
-		return outputAddedItem(item, opts.Format, itemType, itemTitle)
+		return addDraftIssue(ctx, itemService, project.ID, opts.Title, body, opts.Format)
 	}
+
+	return addExistingItem(ctx, itemService, project.ID, opts.ItemRef, opts.Format)
 }
 
 func outputAddedItem(item interface{}, format, itemType, title string) error {
 	switch format {
-	case "json":
+	case formatJSON:
 		return outputAddedItemJSON(item)
-	case "table":
+	case formatTable:
 		return outputAddedItemTable(itemType, title)
 	default:
 		return fmt.Errorf("unknown format: %s", format)
@@ -167,8 +185,8 @@ func outputAddedItemTable(itemType, title string) error {
 
 	if title != "" {
 		displayTitle := title
-		if len(displayTitle) > 80 {
-			displayTitle = displayTitle[:77] + "..."
+		if len(displayTitle) > maxDisplayTitleLength {
+			displayTitle = displayTitle[:addTitleTruncateLength] + "..."
 		}
 		fmt.Printf("Title: %s\n", displayTitle)
 	}
@@ -176,7 +194,7 @@ func outputAddedItemTable(itemType, title string) error {
 	return nil
 }
 
-func outputAddedItemJSON(item interface{}) error {
+func outputAddedItemJSON(_ interface{}) error {
 	// In a real implementation, we'd properly serialize the item
 	fmt.Printf("{\n")
 	fmt.Printf("  \"status\": \"added\",\n")

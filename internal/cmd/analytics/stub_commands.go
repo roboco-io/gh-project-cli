@@ -25,7 +25,7 @@ Examples:
   ghp analytics velocity octocat/123 --period monthly
   ghp analytics velocity octocat/123 --format json --period weekly`,
 
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			return fmt.Errorf("velocity analytics not yet implemented - coming in future release")
 		},
 	}
@@ -55,7 +55,7 @@ Examples:
   ghp analytics timeline octocat/123 --include-activities
   ghp analytics timeline octocat/123 --format json --milestone-focus`,
 
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			return fmt.Errorf("timeline analytics not yet implemented - coming in future release")
 		},
 	}
@@ -86,7 +86,7 @@ Examples:
   ghp analytics distribution octocat/123 --focus assignee
   ghp analytics distribution octocat/123 --format json --include-percentages`,
 
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			return fmt.Errorf("distribution analytics not yet implemented - coming in future release")
 		},
 	}
@@ -124,7 +124,7 @@ Examples:
   ghp analytics import octocat/123 --file items.csv --format csv --strategy append
   ghp analytics import --org myorg/456 --file backup.xml --format xml --strategy replace`,
 
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			return fmt.Errorf("import functionality not yet implemented - coming in future release")
 		},
 	}
@@ -136,7 +136,7 @@ Examples:
 	cmd.Flags().Bool("org", false, "Target organization project")
 
 	// Make file flag required
-	cmd.MarkFlagRequired("file")
+	_ = cmd.MarkFlagRequired("file")
 
 	return cmd
 }
@@ -158,7 +158,7 @@ Examples:
   ghp analytics bulk-delete octocat/123 --items item1,item2 --format json
   ghp analytics bulk-delete --org myorg/456 --items item1,item2,item3 --confirm`,
 
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			return fmt.Errorf("bulk delete functionality not yet implemented - coming in future release")
 		},
 	}
@@ -168,7 +168,7 @@ Examples:
 	cmd.Flags().Bool("org", false, "Target organization project")
 
 	// Make items flag required
-	cmd.MarkFlagRequired("items")
+	_ = cmd.MarkFlagRequired("items")
 
 	return cmd
 }
@@ -189,7 +189,7 @@ Examples:
   ghp analytics bulk-archive octocat/123 --items item1,item2 --format json
   ghp analytics bulk-archive --org myorg/456 --items item1,item2,item3`,
 
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			return fmt.Errorf("bulk archive functionality not yet implemented - coming in future release")
 		},
 	}
@@ -198,7 +198,7 @@ Examples:
 	cmd.Flags().Bool("org", false, "Target organization project")
 
 	// Make items flag required
-	cmd.MarkFlagRequired("items")
+	_ = cmd.MarkFlagRequired("items")
 
 	return cmd
 }
@@ -220,7 +220,7 @@ Examples:
   ghp analytics operation-status op-12345 --format json
   ghp analytics operation-status op-12345 --watch`,
 
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			return fmt.Errorf("operation status functionality not yet implemented - coming in future release")
 		},
 	}

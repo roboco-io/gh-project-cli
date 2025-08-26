@@ -4,96 +4,91 @@ import "time"
 
 // ProjectV2Workflow represents a workflow automation in a GitHub Project v2
 type ProjectV2Workflow struct {
-	ID          string                    `graphql:"id"`
-	Name        string                    `graphql:"name"`
-	Enabled     bool                      `graphql:"enabled"`
-	CreatedAt   time.Time                 `graphql:"createdAt"`
-	UpdatedAt   time.Time                 `graphql:"updatedAt"`
-	
-	Triggers    []ProjectV2WorkflowTrigger `graphql:"triggers"`
-	Actions     []ProjectV2WorkflowAction  `graphql:"actions"`
+	CreatedAt time.Time                  `graphql:"createdAt"`
+	UpdatedAt time.Time                  `graphql:"updatedAt"`
+	ID        string                     `graphql:"id"`
+	Name      string                     `graphql:"name"`
+	Triggers  []ProjectV2WorkflowTrigger `graphql:"triggers"`
+	Actions   []ProjectV2WorkflowAction  `graphql:"actions"`
+	Enabled   bool                       `graphql:"enabled"`
 }
 
 // ProjectV2WorkflowTrigger represents a trigger that starts a workflow
 type ProjectV2WorkflowTrigger struct {
-	ID        string                        `graphql:"id"`
-	Type      ProjectV2WorkflowTriggerType  `graphql:"type"`
-	Event     ProjectV2WorkflowEvent        `graphql:"event"`
-	
-	// Conditional triggers
-	Field     *ProjectV2Field               `graphql:"field"`
-	Value     *string                       `graphql:"value"`
-	
-	// Time-based triggers
-	Schedule  *ProjectV2WorkflowSchedule    `graphql:"schedule"`
+	Field    *ProjectV2Field              `graphql:"field"`
+	Value    *string                      `graphql:"value"`
+	Schedule *ProjectV2WorkflowSchedule   `graphql:"schedule"`
+	ID       string                       `graphql:"id"`
+	Type     ProjectV2WorkflowTriggerType `graphql:"type"`
+	Event    ProjectV2WorkflowEvent       `graphql:"event"`
 }
 
 // ProjectV2WorkflowAction represents an action performed by a workflow
 type ProjectV2WorkflowAction struct {
-	ID        string                        `graphql:"id"`
-	Type      ProjectV2WorkflowActionType   `graphql:"type"`
-	
+	ID   string                      `graphql:"id"`
+	Type ProjectV2WorkflowActionType `graphql:"type"`
+
 	// Field update actions
-	Field     *ProjectV2Field               `graphql:"field"`
-	Value     *string                       `graphql:"value"`
-	
+	Field *ProjectV2Field `graphql:"field"`
+	Value *string         `graphql:"value"`
+
 	// Item movement actions
-	View      *ProjectV2View                `graphql:"view"`
-	Column    *string                       `graphql:"column"`
-	
+	View   *ProjectV2View `graphql:"view"`
+	Column *string        `graphql:"column"`
+
 	// Notification actions
-	Message   *string                       `graphql:"message"`
-	Recipients []string                     `graphql:"recipients"`
+	Message    *string  `graphql:"message"`
+	Recipients []string `graphql:"recipients"`
 }
 
 // ProjectV2WorkflowSchedule represents a time-based trigger schedule
 type ProjectV2WorkflowSchedule struct {
-	Type      ProjectV2ScheduleType         `graphql:"type"`
-	Interval  int                          `graphql:"interval"`
-	DayOfWeek *int                         `graphql:"dayOfWeek"`
-	Hour      *int                         `graphql:"hour"`
-	Minute    *int                         `graphql:"minute"`
+	DayOfWeek *int                  `graphql:"dayOfWeek"`
+	Hour      *int                  `graphql:"hour"`
+	Minute    *int                  `graphql:"minute"`
+	Type      ProjectV2ScheduleType `graphql:"type"`
+	Interval  int                   `graphql:"interval"`
 }
 
 // ProjectV2WorkflowTriggerType represents the type of workflow trigger
 type ProjectV2WorkflowTriggerType string
 
 const (
-	ProjectV2WorkflowTriggerTypeItemAdded        ProjectV2WorkflowTriggerType = "ITEM_ADDED"
-	ProjectV2WorkflowTriggerTypeItemUpdated      ProjectV2WorkflowTriggerType = "ITEM_UPDATED"
-	ProjectV2WorkflowTriggerTypeItemArchived     ProjectV2WorkflowTriggerType = "ITEM_ARCHIVED"
-	ProjectV2WorkflowTriggerTypeFieldChanged     ProjectV2WorkflowTriggerType = "FIELD_CHANGED"
-	ProjectV2WorkflowTriggerTypeStatusChanged    ProjectV2WorkflowTriggerType = "STATUS_CHANGED"
-	ProjectV2WorkflowTriggerTypeAssigneeChanged  ProjectV2WorkflowTriggerType = "ASSIGNEE_CHANGED"
-	ProjectV2WorkflowTriggerTypeScheduled        ProjectV2WorkflowTriggerType = "SCHEDULED"
+	ProjectV2WorkflowTriggerTypeItemAdded       ProjectV2WorkflowTriggerType = "ITEM_ADDED"
+	ProjectV2WorkflowTriggerTypeItemUpdated     ProjectV2WorkflowTriggerType = "ITEM_UPDATED"
+	ProjectV2WorkflowTriggerTypeItemArchived    ProjectV2WorkflowTriggerType = "ITEM_ARCHIVED"
+	ProjectV2WorkflowTriggerTypeFieldChanged    ProjectV2WorkflowTriggerType = "FIELD_CHANGED"
+	ProjectV2WorkflowTriggerTypeStatusChanged   ProjectV2WorkflowTriggerType = "STATUS_CHANGED"
+	ProjectV2WorkflowTriggerTypeAssigneeChanged ProjectV2WorkflowTriggerType = "ASSIGNEE_CHANGED"
+	ProjectV2WorkflowTriggerTypeScheduled       ProjectV2WorkflowTriggerType = "SCHEDULED"
 )
 
 // ProjectV2WorkflowEvent represents specific events within trigger types
 type ProjectV2WorkflowEvent string
 
 const (
-	ProjectV2WorkflowEventIssueOpened    ProjectV2WorkflowEvent = "ISSUE_OPENED"
-	ProjectV2WorkflowEventIssueClosed    ProjectV2WorkflowEvent = "ISSUE_CLOSED"
-	ProjectV2WorkflowEventIssueReopened  ProjectV2WorkflowEvent = "ISSUE_REOPENED"
-	ProjectV2WorkflowEventPROpened       ProjectV2WorkflowEvent = "PR_OPENED"
-	ProjectV2WorkflowEventPRClosed       ProjectV2WorkflowEvent = "PR_CLOSED"
-	ProjectV2WorkflowEventPRMerged       ProjectV2WorkflowEvent = "PR_MERGED"
-	ProjectV2WorkflowEventPRDraft        ProjectV2WorkflowEvent = "PR_DRAFT"
-	ProjectV2WorkflowEventPRReady        ProjectV2WorkflowEvent = "PR_READY"
+	ProjectV2WorkflowEventIssueOpened   ProjectV2WorkflowEvent = "ISSUE_OPENED"
+	ProjectV2WorkflowEventIssueClosed   ProjectV2WorkflowEvent = "ISSUE_CLOSED"
+	ProjectV2WorkflowEventIssueReopened ProjectV2WorkflowEvent = "ISSUE_REOPENED"
+	ProjectV2WorkflowEventPROpened      ProjectV2WorkflowEvent = "PR_OPENED"
+	ProjectV2WorkflowEventPRClosed      ProjectV2WorkflowEvent = "PR_CLOSED"
+	ProjectV2WorkflowEventPRMerged      ProjectV2WorkflowEvent = "PR_MERGED"
+	ProjectV2WorkflowEventPRDraft       ProjectV2WorkflowEvent = "PR_DRAFT"
+	ProjectV2WorkflowEventPRReady       ProjectV2WorkflowEvent = "PR_READY"
 )
 
 // ProjectV2WorkflowActionType represents the type of workflow action
 type ProjectV2WorkflowActionType string
 
 const (
-	ProjectV2WorkflowActionTypeSetField        ProjectV2WorkflowActionType = "SET_FIELD"
-	ProjectV2WorkflowActionTypeClearField      ProjectV2WorkflowActionType = "CLEAR_FIELD"
-	ProjectV2WorkflowActionTypeMoveToColumn    ProjectV2WorkflowActionType = "MOVE_TO_COLUMN"
-	ProjectV2WorkflowActionTypeArchiveItem     ProjectV2WorkflowActionType = "ARCHIVE_ITEM"
-	ProjectV2WorkflowActionTypeAddToProject    ProjectV2WorkflowActionType = "ADD_TO_PROJECT"
-	ProjectV2WorkflowActionTypeNotify          ProjectV2WorkflowActionType = "NOTIFY"
-	ProjectV2WorkflowActionTypeAssign          ProjectV2WorkflowActionType = "ASSIGN"
-	ProjectV2WorkflowActionTypeAddComment      ProjectV2WorkflowActionType = "ADD_COMMENT"
+	ProjectV2WorkflowActionTypeSetField     ProjectV2WorkflowActionType = "SET_FIELD"
+	ProjectV2WorkflowActionTypeClearField   ProjectV2WorkflowActionType = "CLEAR_FIELD"
+	ProjectV2WorkflowActionTypeMoveToColumn ProjectV2WorkflowActionType = "MOVE_TO_COLUMN"
+	ProjectV2WorkflowActionTypeArchiveItem  ProjectV2WorkflowActionType = "ARCHIVE_ITEM"
+	ProjectV2WorkflowActionTypeAddToProject ProjectV2WorkflowActionType = "ADD_TO_PROJECT"
+	ProjectV2WorkflowActionTypeNotify       ProjectV2WorkflowActionType = "NOTIFY"
+	ProjectV2WorkflowActionTypeAssign       ProjectV2WorkflowActionType = "ASSIGN"
+	ProjectV2WorkflowActionTypeAddComment   ProjectV2WorkflowActionType = "ADD_COMMENT"
 )
 
 // ProjectV2ScheduleType represents the type of schedule
@@ -174,9 +169,9 @@ type CreateWorkflowInput struct {
 
 // UpdateWorkflowInput represents input for updating a workflow
 type UpdateWorkflowInput struct {
-	WorkflowID string  `json:"workflowId"`
 	Name       *string `json:"name,omitempty"`
 	Enabled    *bool   `json:"enabled,omitempty"`
+	WorkflowID string  `json:"workflowId"`
 }
 
 // DeleteWorkflowInput represents input for deleting a workflow
@@ -196,22 +191,22 @@ type DisableWorkflowInput struct {
 
 // CreateTriggerInput represents input for creating a workflow trigger
 type CreateTriggerInput struct {
-	WorkflowID string                        `json:"workflowId"`
-	Type       ProjectV2WorkflowTriggerType  `json:"type"`
-	Event      ProjectV2WorkflowEvent        `json:"event,omitempty"`
-	FieldID    *string                       `json:"fieldId,omitempty"`
-	Value      *string                       `json:"value,omitempty"`
+	FieldID    *string                      `json:"fieldId,omitempty"`
+	Value      *string                      `json:"value,omitempty"`
+	WorkflowID string                       `json:"workflowId"`
+	Type       ProjectV2WorkflowTriggerType `json:"type"`
+	Event      ProjectV2WorkflowEvent       `json:"event,omitempty"`
 }
 
 // CreateActionInput represents input for creating a workflow action
 type CreateActionInput struct {
-	WorkflowID string                      `json:"workflowId"`
-	Type       ProjectV2WorkflowActionType `json:"type"`
 	FieldID    *string                     `json:"fieldId,omitempty"`
 	Value      *string                     `json:"value,omitempty"`
 	ViewID     *string                     `json:"viewId,omitempty"`
 	Column     *string                     `json:"column,omitempty"`
 	Message    *string                     `json:"message,omitempty"`
+	WorkflowID string                      `json:"workflowId"`
+	Type       ProjectV2WorkflowActionType `json:"type"`
 }
 
 // Variable Builders

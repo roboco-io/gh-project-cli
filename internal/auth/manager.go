@@ -4,20 +4,20 @@ import (
 	"fmt"
 )
 
-// AuthManager handles authentication flow and provides unified access to tokens
-type AuthManager struct {
+// Manager handles authentication flow and provides unified access to tokens
+type Manager struct {
 	ghAuth *GitHubCLIAuth
 }
 
 // NewAuthManager creates a new authentication manager
-func NewAuthManager() *AuthManager {
-	return &AuthManager{
+func NewAuthManager() *Manager {
+	return &Manager{
 		ghAuth: NewGitHubCLIAuth(),
 	}
 }
 
 // GetValidatedToken retrieves and validates a GitHub token from various sources
-func (am *AuthManager) GetValidatedToken() (string, error) {
+func (am *Manager) GetValidatedToken() (string, error) {
 	var token string
 	var err error
 
@@ -68,7 +68,7 @@ func (am *AuthManager) GetValidatedToken() (string, error) {
 }
 
 // GetTokenWithoutValidation gets a token without validation (for testing)
-func (am *AuthManager) GetTokenWithoutValidation() (string, error) {
+func (am *Manager) GetTokenWithoutValidation() (string, error) {
 	// Try GitHub CLI first
 	if am.ghAuth.CheckGHCLIInstalled() {
 		if token, err := am.ghAuth.GetToken("github.com"); err == nil && token != "" {
@@ -85,14 +85,14 @@ func (am *AuthManager) GetTokenWithoutValidation() (string, error) {
 }
 
 // CheckAuthentication checks if user is properly authenticated
-func (am *AuthManager) CheckAuthentication() error {
+func (am *Manager) CheckAuthentication() error {
 	_, err := am.GetValidatedToken()
 	return err
 }
 
 // GetAuthenticationStatus returns detailed authentication status
-func (am *AuthManager) GetAuthenticationStatus() AuthStatus {
-	status := AuthStatus{
+func (am *Manager) GetAuthenticationStatus() Status {
+	status := Status{
 		GHCLIInstalled: am.ghAuth.CheckGHCLIInstalled(),
 		HasEnvToken:    am.ghAuth.GetFallbackToken() != "",
 	}
@@ -130,25 +130,25 @@ func (am *AuthManager) GetAuthenticationStatus() AuthStatus {
 	return status
 }
 
-// AuthStatus represents the current authentication status
-type AuthStatus struct {
+// Status represents the current authentication status
+type Status struct {
+	Error             string   `json:"error,omitempty"`
+	Scopes            []string `json:"scopes"`
+	RequiredScopes    []string `json:"required_scopes"`
 	GHCLIInstalled    bool     `json:"gh_cli_installed"`
 	HasEnvToken       bool     `json:"has_env_token"`
 	TokenAvailable    bool     `json:"token_available"`
 	TokenValid        bool     `json:"token_valid"`
 	HasRequiredScopes bool     `json:"has_required_scopes"`
-	Scopes            []string `json:"scopes"`
-	RequiredScopes    []string `json:"required_scopes"`
-	Error             string   `json:"error,omitempty"`
 }
 
 // IsReady returns true if authentication is fully configured
-func (as *AuthStatus) IsReady() bool {
+func (as *Status) IsReady() bool {
 	return as.TokenAvailable && as.TokenValid && as.HasRequiredScopes
 }
 
 // GetRecommendation returns a recommendation for fixing authentication issues
-func (as *AuthStatus) GetRecommendation() string {
+func (as *Status) GetRecommendation() string {
 	if !as.GHCLIInstalled {
 		return "Install GitHub CLI: https://cli.github.com/manual/installation"
 	}

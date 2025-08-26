@@ -6,18 +6,18 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // UpdateOptions holds options for the update command
 type UpdateOptions struct {
-	ViewID  string
-	Name    string
-	Filter  string
-	Format  string
+	ViewID string
+	Name   string
+	Filter string
+	Format string
 }
 
 // NewUpdateCmd creates the update command

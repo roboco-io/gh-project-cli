@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // UpdateOptions holds options for the update command
@@ -44,7 +44,7 @@ Examples:
 	}
 
 	cmd.Flags().StringVar(&opts.Name, "name", "", "New name for the field")
-	cmd.MarkFlagRequired("name")
+	_ = cmd.MarkFlagRequired("name")
 
 	return cmd
 }
@@ -94,7 +94,7 @@ func outputUpdatedField(field *graphql.ProjectV2Field, format string) error {
 
 func outputUpdatedFieldTable(field *graphql.ProjectV2Field) error {
 	fmt.Printf("✅ Field updated successfully\n\n")
-	
+
 	fmt.Printf("Field Details:\n")
 	fmt.Printf("  ID: %s\n", field.ID)
 	fmt.Printf("  Name: %s\n", field.Name)

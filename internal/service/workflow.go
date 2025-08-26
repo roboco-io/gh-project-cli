@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
 )
 
 // WorkflowService handles workflow-related operations
@@ -25,35 +25,35 @@ func NewWorkflowService(client *api.Client) *WorkflowService {
 type WorkflowInfo struct {
 	ID          string
 	Name        string
-	Enabled     bool
 	ProjectID   string
 	ProjectName string
 	Triggers    []TriggerInfo
 	Actions     []ActionInfo
+	Enabled     bool
 }
 
 // TriggerInfo represents trigger information
 type TriggerInfo struct {
-	ID        string
-	Type      graphql.ProjectV2WorkflowTriggerType
-	Event     graphql.ProjectV2WorkflowEvent
 	FieldID   *string
 	FieldName *string
 	Value     *string
+	ID        string
+	Type      graphql.ProjectV2WorkflowTriggerType
+	Event     graphql.ProjectV2WorkflowEvent
 }
 
 // ActionInfo represents action information
 type ActionInfo struct {
-	ID          string
-	Type        graphql.ProjectV2WorkflowActionType
-	FieldID     *string
-	FieldName   *string
-	Value       *string
-	ViewID      *string
-	ViewName    *string
-	Column      *string
-	Message     *string
-	Recipients  []string
+	ID         string
+	Type       graphql.ProjectV2WorkflowActionType
+	FieldID    *string
+	FieldName  *string
+	Value      *string
+	ViewID     *string
+	ViewName   *string
+	Column     *string
+	Message    *string
+	Recipients []string
 }
 
 // CreateWorkflowInput represents input for creating a workflow
@@ -65,9 +65,9 @@ type CreateWorkflowInput struct {
 
 // UpdateWorkflowInput represents input for updating a workflow
 type UpdateWorkflowInput struct {
-	WorkflowID string
 	Name       *string
 	Enabled    *bool
+	WorkflowID string
 }
 
 // DeleteWorkflowInput represents input for deleting a workflow
@@ -77,22 +77,22 @@ type DeleteWorkflowInput struct {
 
 // CreateTriggerInput represents input for creating a trigger
 type CreateTriggerInput struct {
+	FieldID    *string
+	Value      *string
 	WorkflowID string
 	Type       graphql.ProjectV2WorkflowTriggerType
 	Event      graphql.ProjectV2WorkflowEvent
-	FieldID    *string
-	Value      *string
 }
 
 // CreateActionInput represents input for creating an action
 type CreateActionInput struct {
-	WorkflowID string
-	Type       graphql.ProjectV2WorkflowActionType
 	FieldID    *string
 	Value      *string
 	ViewID     *string
 	Column     *string
 	Message    *string
+	WorkflowID string
+	Type       graphql.ProjectV2WorkflowActionType
 }
 
 // CreateWorkflow creates a new workflow
@@ -175,7 +175,7 @@ func (s *WorkflowService) DisableWorkflow(ctx context.Context, workflowID string
 }
 
 // CreateTrigger creates a new trigger for a workflow
-func (s *WorkflowService) CreateTrigger(ctx context.Context, input CreateTriggerInput) error {
+func (s *WorkflowService) CreateTrigger(_ context.Context, input CreateTriggerInput) error {
 	variables := graphql.BuildCreateTriggerVariables(graphql.CreateTriggerInput{
 		WorkflowID: input.WorkflowID,
 		Type:       input.Type,
@@ -192,7 +192,7 @@ func (s *WorkflowService) CreateTrigger(ctx context.Context, input CreateTrigger
 }
 
 // CreateAction creates a new action for a workflow
-func (s *WorkflowService) CreateAction(ctx context.Context, input CreateActionInput) error {
+func (s *WorkflowService) CreateAction(_ context.Context, input CreateActionInput) error {
 	variables := graphql.BuildCreateActionVariables(graphql.CreateActionInput{
 		WorkflowID: input.WorkflowID,
 		Type:       input.Type,
@@ -223,57 +223,15 @@ func (s *WorkflowService) GetProjectWorkflows(ctx context.Context, projectID str
 	}
 
 	workflows := make([]WorkflowInfo, len(query.Node.ProjectV2.Workflows.Nodes))
-	for i, workflow := range query.Node.ProjectV2.Workflows.Nodes {
-		triggers := make([]TriggerInfo, len(workflow.Triggers))
-		for j, trigger := range workflow.Triggers {
-			var fieldName *string
-			if trigger.Field != nil {
-				fieldName = &trigger.Field.Name
-			}
-
-			triggers[j] = TriggerInfo{
-				ID:        trigger.ID,
-				Type:      trigger.Type,
-				Event:     trigger.Event,
-				FieldID:   &trigger.Field.ID,
-				FieldName: fieldName,
-				Value:     trigger.Value,
-			}
-		}
-
-		actions := make([]ActionInfo, len(workflow.Actions))
-		for j, action := range workflow.Actions {
-			var fieldName *string
-			if action.Field != nil {
-				fieldName = &action.Field.Name
-			}
-
-			var viewName *string
-			if action.View != nil {
-				viewName = &action.View.Name
-			}
-
-			actions[j] = ActionInfo{
-				ID:        action.ID,
-				Type:      action.Type,
-				FieldID:   &action.Field.ID,
-				FieldName: fieldName,
-				Value:     action.Value,
-				ViewID:    &action.View.ID,
-				ViewName:  viewName,
-				Column:    action.Column,
-				Message:   action.Message,
-				Recipients: action.Recipients,
-			}
-		}
-
+	for i := range query.Node.ProjectV2.Workflows.Nodes {
+		workflow := &query.Node.ProjectV2.Workflows.Nodes[i]
 		workflows[i] = WorkflowInfo{
 			ID:        workflow.ID,
 			Name:      workflow.Name,
 			Enabled:   workflow.Enabled,
 			ProjectID: projectID,
-			Triggers:  triggers,
-			Actions:   actions,
+			Triggers:  convertTriggers(workflow.Triggers),
+			Actions:   convertActions(workflow.Actions),
 		}
 	}
 
@@ -294,55 +252,12 @@ func (s *WorkflowService) GetWorkflow(ctx context.Context, workflowID string) (*
 
 	workflow := query.Node.ProjectV2Workflow
 
-	triggers := make([]TriggerInfo, len(workflow.Triggers))
-	for i, trigger := range workflow.Triggers {
-		var fieldName *string
-		if trigger.Field != nil {
-			fieldName = &trigger.Field.Name
-		}
-
-		triggers[i] = TriggerInfo{
-			ID:        trigger.ID,
-			Type:      trigger.Type,
-			Event:     trigger.Event,
-			FieldID:   &trigger.Field.ID,
-			FieldName: fieldName,
-			Value:     trigger.Value,
-		}
-	}
-
-	actions := make([]ActionInfo, len(workflow.Actions))
-	for i, action := range workflow.Actions {
-		var fieldName *string
-		if action.Field != nil {
-			fieldName = &action.Field.Name
-		}
-
-		var viewName *string
-		if action.View != nil {
-			viewName = &action.View.Name
-		}
-
-		actions[i] = ActionInfo{
-			ID:        action.ID,
-			Type:      action.Type,
-			FieldID:   &action.Field.ID,
-			FieldName: fieldName,
-			Value:     action.Value,
-			ViewID:    &action.View.ID,
-			ViewName:  viewName,
-			Column:    action.Column,
-			Message:   action.Message,
-			Recipients: action.Recipients,
-		}
-	}
-
 	workflowInfo := &WorkflowInfo{
 		ID:       workflow.ID,
 		Name:     workflow.Name,
 		Enabled:  workflow.Enabled,
-		Triggers: triggers,
-		Actions:  actions,
+		Triggers: convertTriggers(workflow.Triggers),
+		Actions:  convertActions(workflow.Actions),
 	}
 
 	return workflowInfo, nil
@@ -353,8 +268,9 @@ func ValidateWorkflowName(name string) error {
 	if strings.TrimSpace(name) == "" {
 		return fmt.Errorf("workflow name cannot be empty")
 	}
-	if len(name) > 100 {
-		return fmt.Errorf("workflow name cannot exceed 100 characters")
+	const maxLength = 100
+	if len(name) > maxLength {
+		return fmt.Errorf("workflow name cannot exceed %d characters", maxLength)
 	}
 	return nil
 }
@@ -384,7 +300,8 @@ func ValidateTriggerType(triggerType string) (graphql.ProjectV2WorkflowTriggerTy
 
 // ValidateActionType validates an action type
 func ValidateActionType(actionType string) (graphql.ProjectV2WorkflowActionType, error) {
-	switch strings.ToUpper(strings.ReplaceAll(actionType, "-", "_")) {
+	normalizedType := normalizeWorkflowType(actionType)
+	switch normalizedType {
 	case "SET_FIELD":
 		return graphql.ProjectV2WorkflowActionTypeSetField, nil
 	case "CLEAR_FIELD":
@@ -402,14 +319,14 @@ func ValidateActionType(actionType string) (graphql.ProjectV2WorkflowActionType,
 	case "ADD_COMMENT":
 		return graphql.ProjectV2WorkflowActionTypeAddComment, nil
 	default:
-		validTypes := graphql.ValidActionTypes()
-		return "", fmt.Errorf("invalid action type: %s (valid types: %s)", actionType, strings.ToLower(strings.Join(validTypes, ", ")))
+		return "", createWorkflowValidationError("action type", actionType, graphql.ValidActionTypes())
 	}
 }
 
 // ValidateEventType validates an event type
 func ValidateEventType(eventType string) (graphql.ProjectV2WorkflowEvent, error) {
-	switch strings.ToUpper(strings.ReplaceAll(eventType, "-", "_")) {
+	normalizedType := normalizeWorkflowType(eventType)
+	switch normalizedType {
 	case "ISSUE_OPENED":
 		return graphql.ProjectV2WorkflowEventIssueOpened, nil
 	case "ISSUE_CLOSED":
@@ -427,8 +344,7 @@ func ValidateEventType(eventType string) (graphql.ProjectV2WorkflowEvent, error)
 	case "PR_READY":
 		return graphql.ProjectV2WorkflowEventPRReady, nil
 	default:
-		validTypes := graphql.ValidEventTypes()
-		return "", fmt.Errorf("invalid event type: %s (valid types: %s)", eventType, strings.ToLower(strings.Join(validTypes, ", ")))
+		return "", createWorkflowValidationError("event type", eventType, graphql.ValidEventTypes())
 	}
 }
 
@@ -445,4 +361,67 @@ func FormatActionType(actionType graphql.ProjectV2WorkflowActionType) string {
 // FormatEvent formats event type for display
 func FormatEvent(event graphql.ProjectV2WorkflowEvent) string {
 	return graphql.FormatEvent(event)
+}
+
+// Helper functions to reduce duplication
+
+// normalizeWorkflowType normalizes workflow type strings
+func normalizeWorkflowType(workflowType string) string {
+	return strings.ToUpper(strings.ReplaceAll(workflowType, "-", "_"))
+}
+
+// createWorkflowValidationError creates a validation error for workflow types
+func createWorkflowValidationError(typeCategory, inputType string, validTypes []string) error {
+	return fmt.Errorf("invalid %s: %s (valid types: %s)", typeCategory, inputType, strings.ToLower(strings.Join(validTypes, ", ")))
+}
+
+// convertTriggers converts GraphQL triggers to TriggerInfo
+func convertTriggers(triggers []graphql.ProjectV2WorkflowTrigger) []TriggerInfo {
+	result := make([]TriggerInfo, len(triggers))
+	for i, trigger := range triggers {
+		var fieldName *string
+		if trigger.Field != nil {
+			fieldName = &trigger.Field.Name
+		}
+
+		result[i] = TriggerInfo{
+			ID:        trigger.ID,
+			Type:      trigger.Type,
+			Event:     trigger.Event,
+			FieldID:   &trigger.Field.ID,
+			FieldName: fieldName,
+			Value:     trigger.Value,
+		}
+	}
+	return result
+}
+
+// convertActions converts GraphQL actions to ActionInfo
+func convertActions(actions []graphql.ProjectV2WorkflowAction) []ActionInfo {
+	result := make([]ActionInfo, len(actions))
+	for i, action := range actions {
+		var fieldName *string
+		if action.Field != nil {
+			fieldName = &action.Field.Name
+		}
+
+		var viewName *string
+		if action.View != nil {
+			viewName = &action.View.Name
+		}
+
+		result[i] = ActionInfo{
+			ID:         action.ID,
+			Type:       action.Type,
+			FieldID:    &action.Field.ID,
+			FieldName:  fieldName,
+			Value:      action.Value,
+			ViewID:     &action.View.ID,
+			ViewName:   viewName,
+			Column:     action.Column,
+			Message:    action.Message,
+			Recipients: action.Recipients,
+		}
+	}
+	return result
 }

@@ -7,22 +7,22 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // CreateOptions holds options for the create command
 type CreateOptions struct {
 	ProjectRef string
 	Owner      string
-	Number     int
-	Org        bool
 	Name       string
 	FieldType  string
-	Options    []string
 	Format     string
+	Options    []string
+	Number     int
+	Org        bool
 }
 
 // NewCreateCmd creates the create command
@@ -82,8 +82,8 @@ func runCreate(ctx context.Context, opts *CreateOptions) error {
 	}
 
 	// Validate field name
-	if err := service.ValidateFieldName(opts.Name); err != nil {
-		return err
+	if validateErr := service.ValidateFieldName(opts.Name); validateErr != nil {
+		return validateErr
 	}
 
 	// Validate field type
@@ -129,9 +129,9 @@ func runCreate(ctx context.Context, opts *CreateOptions) error {
 
 func outputCreatedField(field *graphql.ProjectV2Field, projectName, format string) error {
 	switch format {
-	case "json":
+	case formatJSON:
 		return outputCreatedFieldJSON(field)
-	case "table":
+	case formatTable:
 		return outputCreatedFieldTable(field, projectName)
 	default:
 		return fmt.Errorf("unknown format: %s", format)
@@ -140,7 +140,7 @@ func outputCreatedField(field *graphql.ProjectV2Field, projectName, format strin
 
 func outputCreatedFieldTable(field *graphql.ProjectV2Field, projectName string) error {
 	fmt.Printf("✅ Field '%s' created successfully in project '%s'\n\n", field.Name, projectName)
-	
+
 	fmt.Printf("Field Details:\n")
 	fmt.Printf("  ID: %s\n", field.ID)
 	fmt.Printf("  Name: %s\n", field.Name)

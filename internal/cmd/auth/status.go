@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
 )
 
 // StatusOptions holds options for the status command
@@ -33,7 +33,7 @@ This command checks:
 Examples:
   ghp auth status                 # Show status in table format
   ghp auth status --format json  # Show status as JSON`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			return runStatus(opts)
 		},
 	}
@@ -57,7 +57,7 @@ func runStatus(opts *StatusOptions) error {
 	}
 }
 
-func outputStatusTable(status auth.AuthStatus) error {
+func outputStatusTable(status auth.Status) error {
 	fmt.Printf("GitHub CLI Authentication Status\n")
 	fmt.Printf("================================\n\n")
 
@@ -127,7 +127,7 @@ func outputStatusTable(status auth.AuthStatus) error {
 	return nil
 }
 
-func outputStatusJSON(status auth.AuthStatus) error {
+func outputStatusJSON(status auth.Status) error {
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(status)

@@ -8,9 +8,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // ExportOptions holds options for the export command
@@ -18,11 +18,11 @@ type ExportOptions struct {
 	ProjectRef       string
 	Format           string
 	OutputFormat     string
+	Filter           string
 	IncludeItems     bool
 	IncludeFields    bool
 	IncludeViews     bool
 	IncludeWorkflows bool
-	Filter           string
 }
 
 // NewExportCmd creates the export command
@@ -151,9 +151,9 @@ func runExport(ctx context.Context, opts *ExportOptions) error {
 
 func outputExport(export *service.ProjectV2Export, format string) error {
 	switch format {
-	case "json":
+	case FormatJSON:
 		return outputExportJSON(export)
-	case "table":
+	case FormatTable:
 		return outputExportTable(export)
 	default:
 		return fmt.Errorf("unknown output format: %s", format)

@@ -7,10 +7,14 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
+)
+
+const (
+	maxBodyDisplayLength = 500
 )
 
 // ViewOptions holds options for the view command
@@ -154,7 +158,7 @@ func outputIssueDetailsTable(issue *graphql.Issue) error {
 
 		// Truncate long body for readability
 		body := issue.Body
-		if len(body) > 500 {
+		if len(body) > maxBodyDisplayLength {
 			body = body[:497] + "..."
 		}
 
@@ -215,7 +219,7 @@ func outputPullRequestDetailsTable(pr *graphql.PullRequest) error {
 
 		// Truncate long body for readability
 		body := pr.Body
-		if len(body) > 500 {
+		if len(body) > maxBodyDisplayLength {
 			body = body[:497] + "..."
 		}
 

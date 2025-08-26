@@ -6,9 +6,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // RemoveOptions holds options for the remove command
@@ -83,7 +83,11 @@ func runRemove(ctx context.Context, opts *RemoveOptions) error {
 		fmt.Printf("Type 'REMOVE' to confirm: ")
 
 		var confirmation string
-		fmt.Scanln(&confirmation)
+		_, scanErr := fmt.Scanln(&confirmation)
+		if scanErr != nil {
+			fmt.Println("❌ Failed to read confirmation.")
+			return scanErr
+		}
 
 		if confirmation != "REMOVE" {
 			fmt.Println("❌ Removal canceled.")

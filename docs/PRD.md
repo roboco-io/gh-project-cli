@@ -86,7 +86,7 @@ graph TB
 
 #### 핵심 의존성
 ```go
-module github.com/roboco-io/ghp-cli
+module github.com/roboco-io/gh-project-cli
 
 go 1.21
 
@@ -599,10 +599,10 @@ brew install ghp-cli
 brew upgrade ghp-cli
 
 # Go Install
-go install github.com/roboco-io/ghp-cli@latest
+go install github.com/roboco-io/gh-project-cli@latest
 
 # Binary Download
-curl -L https://github.com/roboco-io/ghp-cli/releases/latest/download/ghp-$(uname -s)-$(uname -m) -o ghp
+curl -L https://github.com/roboco-io/gh-project-cli/releases/latest/download/ghp-$(uname -s)-$(uname -m) -o ghp
 chmod +x ghp
 ```
 
@@ -726,4 +726,4 @@ gantt
 ### 15.3 연락처
 - **제품 책임자**: product@roboco.io
 - **기술 지원**: support@roboco.io
-- **커뮤니티**: https://github.com/roboco-io/ghp-cli/discussions
+- **커뮤니티**: https://github.com/roboco-io/gh-project-cli/discussions

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
 )
 
 // ViewService handles view-related operations
@@ -23,15 +23,15 @@ func NewViewService(client *api.Client) *ViewService {
 
 // ViewInfo represents simplified view information for display
 type ViewInfo struct {
+	Filter      *string
 	ID          string
 	Name        string
 	Layout      graphql.ProjectV2ViewLayout
-	Number      int
-	Filter      *string
 	ProjectID   string
 	ProjectName string
 	GroupBy     []ViewGroupByInfo
 	SortBy      []ViewSortByInfo
+	Number      int
 }
 
 // ViewGroupByInfo represents group by configuration information
@@ -57,9 +57,9 @@ type CreateViewInput struct {
 
 // UpdateViewInput represents input for updating a view
 type UpdateViewInput struct {
-	ViewID string
 	Name   *string
 	Filter *string
+	ViewID string
 }
 
 // DeleteViewInput represents input for deleting a view
@@ -83,9 +83,9 @@ type UpdateViewSortInput struct {
 
 // UpdateViewGroupInput represents input for updating view group configuration
 type UpdateViewGroupInput struct {
-	ViewID      string
-	GroupByID   *string
-	Direction   graphql.ProjectV2ViewSortDirection
+	ViewID    string
+	GroupByID *string
+	Direction graphql.ProjectV2ViewSortDirection
 }
 
 // CreateView creates a new project view
@@ -201,7 +201,8 @@ func (s *ViewService) GetProjectViews(ctx context.Context, projectID string) ([]
 	}
 
 	views := make([]ViewInfo, len(query.Node.ProjectV2.Views.Nodes))
-	for i, view := range query.Node.ProjectV2.Views.Nodes {
+	for i := range query.Node.ProjectV2.Views.Nodes {
+		view := &query.Node.ProjectV2.Views.Nodes[i]
 		groupBy := make([]ViewGroupByInfo, len(view.GroupBy))
 		for j, gb := range view.GroupBy {
 			groupBy[j] = ViewGroupByInfo{
@@ -285,8 +286,8 @@ func ValidateViewName(name string) error {
 	if strings.TrimSpace(name) == "" {
 		return fmt.Errorf("view name cannot be empty")
 	}
-	if len(name) > 100 {
-		return fmt.Errorf("view name cannot exceed 100 characters")
+	if len(name) > maxViewNameLength {
+		return fmt.Errorf("view name cannot exceed %d characters", maxViewNameLength)
 	}
 	return nil
 }
@@ -315,7 +316,8 @@ func ValidateSortDirection(direction string) (graphql.ProjectV2ViewSortDirection
 		return graphql.ProjectV2ViewSortDirectionDESC, nil
 	default:
 		validDirections := graphql.ValidSortDirections()
-		return "", fmt.Errorf("invalid sort direction: %s (valid directions: %s)", direction, strings.ToLower(strings.Join(validDirections, ", ")))
+		validStr := strings.ToLower(strings.Join(validDirections, ", "))
+		return "", fmt.Errorf("invalid sort direction: %s (valid directions: %s)", direction, validStr)
 	}
 }
 

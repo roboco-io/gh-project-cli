@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // AddTriggerOptions holds options for the add-trigger command
@@ -127,9 +127,9 @@ func runAddTrigger(ctx context.Context, opts *AddTriggerOptions) error {
 
 func outputAddedTrigger(input *service.CreateTriggerInput, format string) error {
 	switch format {
-	case "json":
+	case formatJSON:
 		return outputAddedTriggerJSON(input)
-	case "table":
+	case formatTable:
 		return outputAddedTriggerTable(input)
 	default:
 		return fmt.Errorf("unknown format: %s", format)

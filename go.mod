@@ -1,6 +1,8 @@
-module github.com/roboco-io/ghp-cli
+module github.com/roboco-io/gh-project-cli
 
-go 1.23.6
+go 1.23.0
+
+toolchain go1.23.6
 
 require (
 	github.com/shurcooL/graphql v0.0.0-20230722043721-ed46e5a46466

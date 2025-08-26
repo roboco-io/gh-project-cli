@@ -7,13 +7,13 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/roboco-io/ghp-cli/internal/cmd/analytics"
-	"github.com/roboco-io/ghp-cli/internal/cmd/auth"
-	"github.com/roboco-io/ghp-cli/internal/cmd/field"
-	"github.com/roboco-io/ghp-cli/internal/cmd/item"
-	"github.com/roboco-io/ghp-cli/internal/cmd/project"
-	"github.com/roboco-io/ghp-cli/internal/cmd/view"
-	"github.com/roboco-io/ghp-cli/internal/cmd/workflow"
+	"github.com/roboco-io/gh-project-cli/internal/cmd/analytics"
+	"github.com/roboco-io/gh-project-cli/internal/cmd/auth"
+	"github.com/roboco-io/gh-project-cli/internal/cmd/field"
+	"github.com/roboco-io/gh-project-cli/internal/cmd/item"
+	"github.com/roboco-io/gh-project-cli/internal/cmd/project"
+	"github.com/roboco-io/gh-project-cli/internal/cmd/view"
+	"github.com/roboco-io/gh-project-cli/internal/cmd/workflow"
 )
 
 var (
@@ -63,12 +63,12 @@ Example:
 	cmd.PersistentFlags().Bool("no-cache", false, "Disable caching")
 
 	// Bind flags to viper
-	viper.BindPFlag("token", cmd.PersistentFlags().Lookup("token"))
-	viper.BindPFlag("org", cmd.PersistentFlags().Lookup("org"))
-	viper.BindPFlag("user", cmd.PersistentFlags().Lookup("user"))
-	viper.BindPFlag("format", cmd.PersistentFlags().Lookup("format"))
-	viper.BindPFlag("debug", cmd.PersistentFlags().Lookup("debug"))
-	viper.BindPFlag("no-cache", cmd.PersistentFlags().Lookup("no-cache"))
+	_ = viper.BindPFlag("token", cmd.PersistentFlags().Lookup("token"))
+	_ = viper.BindPFlag("org", cmd.PersistentFlags().Lookup("org"))
+	_ = viper.BindPFlag("user", cmd.PersistentFlags().Lookup("user"))
+	_ = viper.BindPFlag("format", cmd.PersistentFlags().Lookup("format"))
+	_ = viper.BindPFlag("debug", cmd.PersistentFlags().Lookup("debug"))
+	_ = viper.BindPFlag("no-cache", cmd.PersistentFlags().Lookup("no-cache"))
 
 	// Add subcommands
 	cmd.AddCommand(analytics.NewAnalyticsCmd())

@@ -4,31 +4,29 @@ import "time"
 
 // ProjectV2View represents a view in a GitHub Project v2
 type ProjectV2View struct {
-	ID           string                 `graphql:"id"`
-	Name         string                 `graphql:"name"`
-	Layout       ProjectV2ViewLayout    `graphql:"layout"`
-	Number       int                    `graphql:"number"`
-	CreatedAt    time.Time             `graphql:"createdAt"`
-	UpdatedAt    time.Time             `graphql:"updatedAt"`
-	DatabaseID   int                   `graphql:"databaseId"`
-	Filter       *string               `graphql:"filter"`
-	GroupBy      []ProjectV2ViewGroupBy `graphql:"groupBy"`
-	SortBy       []ProjectV2ViewSortBy  `graphql:"sortBy"`
+	CreatedAt       time.Time              `graphql:"createdAt"`
+	UpdatedAt       time.Time              `graphql:"updatedAt"`
+	Filter          *string                `graphql:"filter"`
+	ID              string                 `graphql:"id"`
+	Name            string                 `graphql:"name"`
+	Layout          ProjectV2ViewLayout    `graphql:"layout"`
+	GroupBy         []ProjectV2ViewGroupBy `graphql:"groupBy"`
+	SortBy          []ProjectV2ViewSortBy  `graphql:"sortBy"`
 	VerticalGroupBy []ProjectV2ViewGroupBy `graphql:"verticalGroupBy"`
-	
-	// Group by and sort by fields for different view layouts
-	Fields struct {
+	Fields          struct {
 		Nodes []ProjectV2Field `graphql:"nodes"`
 	} `graphql:"groupByFields(first: 20)"`
+	Number     int `graphql:"number"`
+	DatabaseID int `graphql:"databaseId"`
 }
 
 // ProjectV2ViewLayout represents the layout type of a view
 type ProjectV2ViewLayout string
 
 const (
-	ProjectV2ViewLayoutTable    ProjectV2ViewLayout = "TABLE_VIEW"
-	ProjectV2ViewLayoutBoard    ProjectV2ViewLayout = "BOARD_VIEW"
-	ProjectV2ViewLayoutRoadmap  ProjectV2ViewLayout = "ROADMAP_VIEW"
+	ProjectV2ViewLayoutTable   ProjectV2ViewLayout = "TABLE_VIEW"
+	ProjectV2ViewLayoutBoard   ProjectV2ViewLayout = "BOARD_VIEW"
+	ProjectV2ViewLayoutRoadmap ProjectV2ViewLayout = "ROADMAP_VIEW"
 )
 
 // ProjectV2ViewGroupBy represents a group by configuration
@@ -59,15 +57,14 @@ const (
 
 // ProjectV2ViewColumn represents a column in a view
 type ProjectV2ViewColumn struct {
-	ID       string `graphql:"id"`
-	Name     string `graphql:"name"`
-	Width    int    `graphql:"width"`
-	IsHidden bool   `graphql:"isHidden"`
-	
 	Field struct {
 		ID   string `graphql:"id"`
 		Name string `graphql:"name"`
 	} `graphql:"field"`
+	ID       string `graphql:"id"`
+	Name     string `graphql:"name"`
+	Width    int    `graphql:"width"`
+	IsHidden bool   `graphql:"isHidden"`
 }
 
 // Queries
@@ -131,9 +128,9 @@ type CreateViewInput struct {
 
 // UpdateViewInput represents input for updating a view
 type UpdateViewInput struct {
-	ViewID   string  `json:"viewId"`
-	Name     *string `json:"name,omitempty"`
-	Filter   *string `json:"filter,omitempty"`
+	Name   *string `json:"name,omitempty"`
+	Filter *string `json:"filter,omitempty"`
+	ViewID string  `json:"viewId"`
 }
 
 // DeleteViewInput represents input for deleting a view
@@ -157,9 +154,9 @@ type UpdateViewSortByInput struct {
 
 // UpdateViewGroupByInput represents input for updating view group configuration
 type UpdateViewGroupByInput struct {
-	ViewID      string                     `json:"viewId"`
-	GroupByID   *string                    `json:"groupById,omitempty"`
-	Direction   ProjectV2ViewSortDirection `json:"direction"`
+	ViewID    string                     `json:"viewId"`
+	GroupByID *string                    `json:"groupById,omitempty"`
+	Direction ProjectV2ViewSortDirection `json:"direction"`
 }
 
 // Variable Builders

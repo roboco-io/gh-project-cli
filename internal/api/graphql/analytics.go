@@ -4,19 +4,17 @@ import "time"
 
 // ProjectV2Analytics represents analytics data for a GitHub Project v2
 type ProjectV2Analytics struct {
-	ProjectID  string `graphql:"id"`
-	Title      string `graphql:"title"`
-	ItemCount  int    `graphql:"totalItemCount"`
-	FieldCount int    `graphql:"totalFieldCount"`
-	ViewCount  int    `graphql:"totalViewCount"`
-
+	Timeline         ProjectV2Timeline    `graphql:"timeline"`
+	ProjectID        string               `graphql:"id"`
+	Title            string               `graphql:"title"`
 	ItemsByStatus    []ItemStatusCount    `graphql:"itemsByStatus"`
 	ItemsByAssignee  []ItemAssigneeCount  `graphql:"itemsByAssignee"`
 	ItemsByLabel     []ItemLabelCount     `graphql:"itemsByLabel"`
 	ItemsByMilestone []ItemMilestoneCount `graphql:"itemsByMilestone"`
-
-	Timeline ProjectV2Timeline `graphql:"timeline"`
-	Velocity ProjectV2Velocity `graphql:"velocity"`
+	Velocity         ProjectV2Velocity    `graphql:"velocity"`
+	ItemCount        int                  `graphql:"totalItemCount"`
+	FieldCount       int                  `graphql:"totalFieldCount"`
+	ViewCount        int                  `graphql:"totalViewCount"`
 }
 
 // ItemStatusCount represents count of items by status
@@ -47,9 +45,9 @@ type ItemMilestoneCount struct {
 type ProjectV2Timeline struct {
 	StartDate  *time.Time          `graphql:"startDate"`
 	EndDate    *time.Time          `graphql:"endDate"`
-	Duration   int                 `graphql:"durationDays"`
 	Milestones []TimelineMilestone `graphql:"milestones"`
 	Activities []TimelineActivity  `graphql:"activities"`
+	Duration   int                 `graphql:"durationDays"`
 }
 
 // TimelineMilestone represents a milestone in the project timeline
@@ -67,20 +65,20 @@ type TimelineMilestone struct {
 type TimelineActivity struct {
 	Date        time.Time `graphql:"date"`
 	Type        string    `graphql:"type"`
-	Count       int       `graphql:"count"`
 	Description string    `graphql:"description"`
+	Count       int       `graphql:"count"`
 }
 
 // ProjectV2Velocity represents project velocity metrics
 type ProjectV2Velocity struct {
 	Period          string            `graphql:"period"`
-	CompletedItems  int               `graphql:"completedItems"`
-	AddedItems      int               `graphql:"addedItems"`
-	ClosureRate     float64           `graphql:"closureRate"`
 	WeeklyVelocity  []WeeklyVelocity  `graphql:"weeklyVelocity"`
 	MonthlyVelocity []MonthlyVelocity `graphql:"monthlyVelocity"`
 	LeadTime        VelocityMetric    `graphql:"leadTime"`
 	CycleTime       VelocityMetric    `graphql:"cycleTime"`
+	ClosureRate     float64           `graphql:"closureRate"`
+	CompletedItems  int               `graphql:"completedItems"`
+	AddedItems      int               `graphql:"addedItems"`
 }
 
 // WeeklyVelocity represents velocity metrics for a week
@@ -101,10 +99,10 @@ type MonthlyVelocity struct {
 
 // VelocityMetric represents time-based velocity metrics
 type VelocityMetric struct {
+	Unit    string  `graphql:"unit"`
 	Average float64 `graphql:"average"`
 	Median  float64 `graphql:"median"`
 	P95     float64 `graphql:"p95"`
-	Unit    string  `graphql:"unit"`
 }
 
 // ProjectV2Export represents export data for a project
@@ -143,10 +141,10 @@ type ExportItem struct {
 
 // ExportItemFieldValue represents a field value in the export
 type ExportItemFieldValue struct {
+	Value     interface{} `graphql:"value"`
 	FieldID   string      `graphql:"fieldId"`
 	FieldName string      `graphql:"fieldName"`
 	FieldType string      `graphql:"fieldType"`
-	Value     interface{} `graphql:"value"`
 }
 
 // ExportField represents a field in the export
@@ -181,36 +179,36 @@ type ExportView struct {
 type ExportWorkflow struct {
 	ID       string `graphql:"id"`
 	Name     string `graphql:"name"`
-	Enabled  bool   `graphql:"enabled"`
 	Triggers []struct {
-		Type    string  `graphql:"type"`
 		Event   *string `graphql:"event"`
 		FieldID *string `graphql:"fieldId"`
 		Value   *string `graphql:"value"`
+		Type    string  `graphql:"type"`
 	} `graphql:"triggers"`
 	Actions []struct {
-		Type    string  `graphql:"type"`
 		FieldID *string `graphql:"fieldId"`
 		Value   *string `graphql:"value"`
 		ViewID  *string `graphql:"viewId"`
 		Column  *string `graphql:"column"`
 		Message *string `graphql:"message"`
+		Type    string  `graphql:"type"`
 	} `graphql:"actions"`
+	Enabled bool `graphql:"enabled"`
 }
 
 // BulkOperation represents a bulk operation request
 type BulkOperation struct {
+	CreatedAt      time.Time             `graphql:"createdAt"`
+	CompletedAt    *time.Time            `graphql:"completedAt"`
+	ErrorMessage   *string               `graphql:"errorMessage"`
 	ID             string                `graphql:"id"`
 	Type           BulkOperationType     `graphql:"type"`
 	Status         BulkOperationStatus   `graphql:"status"`
+	Results        []BulkOperationResult `graphql:"results"`
 	Progress       float64               `graphql:"progress"`
 	TotalItems     int                   `graphql:"totalItems"`
 	ProcessedItems int                   `graphql:"processedItems"`
 	FailedItems    int                   `graphql:"failedItems"`
-	CreatedAt      time.Time             `graphql:"createdAt"`
-	CompletedAt    *time.Time            `graphql:"completedAt"`
-	ErrorMessage   *string               `graphql:"errorMessage"`
-	Results        []BulkOperationResult `graphql:"results"`
 }
 
 // BulkOperationType represents the type of bulk operation
@@ -233,14 +231,14 @@ const (
 	BulkOperationStatusRunning   BulkOperationStatus = "RUNNING"
 	BulkOperationStatusCompleted BulkOperationStatus = "COMPLETED"
 	BulkOperationStatusFailed    BulkOperationStatus = "FAILED"
-	BulkOperationStatusCancelled BulkOperationStatus = "CANCELLED"
+	BulkOperationStatusCancelled BulkOperationStatus = "CANCELED"
 )
 
 // BulkOperationResult represents the result of a single item in bulk operation
 type BulkOperationResult struct {
+	ErrorMessage *string `graphql:"errorMessage"`
 	ItemID       string  `graphql:"itemId"`
 	Success      bool    `graphql:"success"`
-	ErrorMessage *string `graphql:"errorMessage"`
 }
 
 // Queries
@@ -300,13 +298,13 @@ type BulkArchiveItemsMutation struct {
 
 // ExportProjectInput represents input for project export
 type ExportProjectInput struct {
+	Filter           *string               `json:"filter,omitempty"`
 	ProjectID        string                `json:"projectId"`
 	Format           ProjectV2ExportFormat `json:"format"`
 	IncludeItems     bool                  `json:"includeItems"`
 	IncludeFields    bool                  `json:"includeFields"`
 	IncludeViews     bool                  `json:"includeViews"`
 	IncludeWorkflows bool                  `json:"includeWorkflows"`
-	Filter           *string               `json:"filter,omitempty"`
 }
 
 // ImportProjectInput represents input for project import
@@ -319,9 +317,9 @@ type ImportProjectInput struct {
 
 // BulkUpdateItemsInput represents input for bulk item update
 type BulkUpdateItemsInput struct {
+	Updates   map[string]interface{} `json:"updates"`
 	ProjectID string                 `json:"projectId"`
 	ItemIDs   []string               `json:"itemIds"`
-	Updates   map[string]interface{} `json:"updates"`
 }
 
 // BulkDeleteItemsInput represents input for bulk item delete
@@ -482,7 +480,7 @@ func FormatBulkOperationStatus(status BulkOperationStatus) string {
 	case BulkOperationStatusFailed:
 		return "Failed"
 	case BulkOperationStatusCancelled:
-		return "Cancelled"
+		return "Canceled"
 	default:
 		return string(status)
 	}

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +10,12 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+)
+
+const (
+	// HTTP status codes
+	httpStatusUnauthorized = 401
+	httpStatusOK           = 200
 )
 
 // GitHubCLIAuth handles authentication by integrating with GitHub CLI
@@ -52,25 +59,28 @@ func (g *GitHubCLIAuth) GetToken(hostname string) (string, error) {
 
 // UserResponse represents the GitHub user API response
 type UserResponse struct {
-	ID    int    `json:"id"`
 	Login string `json:"login"`
 	Name  string `json:"name"`
 	Type  string `json:"type"`
+	ID    int    `json:"id"`
 }
 
 // ValidateToken validates the given token with GitHub API and returns scopes
-func (g *GitHubCLIAuth) ValidateToken(token string) (bool, []string, error) {
+func (g *GitHubCLIAuth) ValidateToken(token string) (isValid bool, scopes []string, err error) {
 	if token == "" {
 		return false, nil, errors.New("empty token provided")
 	}
 
 	// Create HTTP client with timeout
+	const requestTimeout = 10 * time.Second
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: requestTimeout,
 	}
 
 	// Make request to GitHub API user endpoint
-	req, err := http.NewRequest("GET", "https://api.github.com/user", http.NoBody)
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://api.github.com/user", http.NoBody)
 	if err != nil {
 		return false, nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -88,10 +98,10 @@ func (g *GitHubCLIAuth) ValidateToken(token string) (bool, []string, error) {
 	defer resp.Body.Close()
 
 	// Check status code
-	if resp.StatusCode == 401 {
+	if resp.StatusCode == httpStatusUnauthorized {
 		return false, nil, errors.New("invalid or expired token")
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != httpStatusOK {
 		return false, nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
@@ -102,7 +112,6 @@ func (g *GitHubCLIAuth) ValidateToken(token string) (bool, []string, error) {
 	}
 
 	// Parse scopes from X-OAuth-Scopes header
-	var scopes []string
 	if scopeHeader := resp.Header.Get("X-OAuth-Scopes"); scopeHeader != "" {
 		scopesList := strings.Split(scopeHeader, ", ")
 		for _, scope := range scopesList {

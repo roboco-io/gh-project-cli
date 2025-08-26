@@ -6,12 +6,12 @@ import (
 
 // Field represents a project field
 type Field struct {
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
 	Type      FieldType `json:"type"`
 	Options   []string  `json:"options,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // FieldType represents the type of field

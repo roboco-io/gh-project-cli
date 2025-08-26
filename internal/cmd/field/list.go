@@ -7,18 +7,23 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
+)
+
+const (
+	listTableSeparatorWidth = 70
+	fieldNameTruncateLength = 18
 )
 
 // ListOptions holds options for the list command
 type ListOptions struct {
 	ProjectRef string
 	Owner      string
+	Format     string
 	Number     int
 	Org        bool
-	Format     string
 }
 
 // NewListCmd creates the list command
@@ -87,9 +92,9 @@ func runList(ctx context.Context, opts *ListOptions) error {
 
 func outputFields(fields []service.FieldInfo, format string) error {
 	switch format {
-	case "json":
+	case formatJSON:
 		return outputFieldsJSON(fields)
-	case "table":
+	case formatTable:
 		return outputFieldsTable(fields)
 	default:
 		return fmt.Errorf("unknown format: %s", format)
@@ -104,7 +109,7 @@ func outputFieldsTable(fields []service.FieldInfo) error {
 
 	fmt.Printf("Fields in project '%s':\n\n", fields[0].ProjectName)
 	fmt.Printf("%-20s %-15s %-10s %s\n", "NAME", "TYPE", "OPTIONS", "ID")
-	fmt.Println(strings.Repeat("-", 70))
+	fmt.Println(strings.Repeat("-", listTableSeparatorWidth))
 
 	for _, field := range fields {
 		optionCount := len(field.Options)
@@ -114,7 +119,7 @@ func outputFieldsTable(fields []service.FieldInfo) error {
 		}
 
 		fmt.Printf("%-20s %-15s %-10s %s\n",
-			truncate(field.Name, 18),
+			truncate(field.Name, fieldNameTruncateLength),
 			service.FormatFieldDataType(field.DataType),
 			optionsStr,
 			field.ID)
@@ -133,6 +138,54 @@ func outputFieldsTable(fields []service.FieldInfo) error {
 	return nil
 }
 
+func outputFieldOptionJSON(option service.FieldOptionInfo, isLast bool) {
+	fmt.Printf("      {\n")
+	fmt.Printf("        \"id\": \"%s\",\n", option.ID)
+	fmt.Printf("        \"name\": \"%s\",\n", option.Name)
+	fmt.Printf("        \"color\": \"%s\"", option.Color)
+
+	if option.Description != nil {
+		fmt.Printf(",\n        \"description\": \"%s\"\n", *option.Description)
+	} else {
+		fmt.Printf("\n")
+	}
+
+	if isLast {
+		fmt.Printf("      }\n")
+	} else {
+		fmt.Printf("      },\n")
+	}
+}
+
+func outputFieldOptionsJSON(options []service.FieldOptionInfo) {
+	if len(options) > 0 {
+		fmt.Printf("    \"options\": [\n")
+		for j, option := range options {
+			outputFieldOptionJSON(option, j == len(options)-1)
+		}
+		fmt.Printf("    ]\n")
+	} else {
+		fmt.Printf("    \"options\": []\n")
+	}
+}
+
+func outputSingleFieldJSON(field *service.FieldInfo, isLast bool) {
+	fmt.Printf("  {\n")
+	fmt.Printf("    \"id\": \"%s\",\n", field.ID)
+	fmt.Printf("    \"name\": \"%s\",\n", field.Name)
+	fmt.Printf("    \"dataType\": \"%s\",\n", field.DataType)
+	fmt.Printf("    \"projectId\": \"%s\",\n", field.ProjectID)
+	fmt.Printf("    \"projectName\": \"%s\",\n", field.ProjectName)
+
+	outputFieldOptionsJSON(field.Options)
+
+	if isLast {
+		fmt.Printf("  }\n")
+	} else {
+		fmt.Printf("  },\n")
+	}
+}
+
 func outputFieldsJSON(fields []service.FieldInfo) error {
 	if len(fields) == 0 {
 		fmt.Println("[]")
@@ -141,41 +194,7 @@ func outputFieldsJSON(fields []service.FieldInfo) error {
 
 	fmt.Println("[")
 	for i, field := range fields {
-		fmt.Printf("  {\n")
-		fmt.Printf("    \"id\": \"%s\",\n", field.ID)
-		fmt.Printf("    \"name\": \"%s\",\n", field.Name)
-		fmt.Printf("    \"dataType\": \"%s\",\n", field.DataType)
-		fmt.Printf("    \"projectId\": \"%s\",\n", field.ProjectID)
-		fmt.Printf("    \"projectName\": \"%s\",\n", field.ProjectName)
-		
-		if len(field.Options) > 0 {
-			fmt.Printf("    \"options\": [\n")
-			for j, option := range field.Options {
-				fmt.Printf("      {\n")
-				fmt.Printf("        \"id\": \"%s\",\n", option.ID)
-				fmt.Printf("        \"name\": \"%s\",\n", option.Name)
-				fmt.Printf("        \"color\": \"%s\"", option.Color)
-				if option.Description != nil {
-					fmt.Printf(",\n        \"description\": \"%s\"\n", *option.Description)
-				} else {
-					fmt.Printf("\n")
-				}
-				if j < len(field.Options)-1 {
-					fmt.Printf("      },\n")
-				} else {
-					fmt.Printf("      }\n")
-				}
-			}
-			fmt.Printf("    ]\n")
-		} else {
-			fmt.Printf("    \"options\": []\n")
-		}
-
-		if i < len(fields)-1 {
-			fmt.Printf("  },\n")
-		} else {
-			fmt.Printf("  }\n")
-		}
+		outputSingleFieldJSON(&field, i == len(fields)-1)
 	}
 	fmt.Println("]")
 

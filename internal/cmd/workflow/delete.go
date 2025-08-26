@@ -9,16 +9,16 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // DeleteOptions holds options for the delete command
 type DeleteOptions struct {
 	WorkflowID string
-	Force      bool
 	Format     string
+	Force      bool
 }
 
 // NewDeleteCmd creates the delete command
@@ -78,20 +78,20 @@ func runDelete(ctx context.Context, opts *DeleteOptions) error {
 		if !workflowInfo.Enabled {
 			status = "disabled"
 		}
-		
+
 		fmt.Printf("Are you sure you want to delete workflow '%s' (%s)?\n", workflowInfo.Name, status)
 		fmt.Printf("This will remove %d trigger(s) and %d action(s).\n", len(workflowInfo.Triggers), len(workflowInfo.Actions))
 		fmt.Printf("This action cannot be undone. [y/N]: ")
 
 		reader := bufio.NewReader(os.Stdin)
-		response, err := reader.ReadString('\n')
-		if err != nil {
-			return fmt.Errorf("failed to read confirmation: %w", err)
+		response, readErr := reader.ReadString('\n')
+		if readErr != nil {
+			return fmt.Errorf("failed to read confirmation: %w", readErr)
 		}
 
 		response = strings.TrimSpace(strings.ToLower(response))
 		if response != "y" && response != "yes" {
-			fmt.Println("Deletion cancelled.")
+			fmt.Println("Deletion canceled.")
 			return nil
 		}
 	}
@@ -112,9 +112,9 @@ func runDelete(ctx context.Context, opts *DeleteOptions) error {
 
 func outputDeleteConfirmation(workflowInfo *service.WorkflowInfo, format string) error {
 	switch format {
-	case "json":
+	case formatJSON:
 		return outputDeleteConfirmationJSON(workflowInfo)
-	case "table":
+	case formatTable:
 		return outputDeleteConfirmationTable(workflowInfo)
 	default:
 		return fmt.Errorf("unknown format: %s", format)

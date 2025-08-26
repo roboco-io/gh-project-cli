@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
 )
 
 // FieldService handles field-related operations
@@ -26,17 +26,17 @@ type FieldInfo struct {
 	ID          string
 	Name        string
 	DataType    graphql.ProjectV2FieldDataType
-	Options     []FieldOptionInfo
 	ProjectID   string
 	ProjectName string
+	Options     []FieldOptionInfo
 }
 
 // FieldOptionInfo represents field option information
 type FieldOptionInfo struct {
+	Description *string
 	ID          string
 	Name        string
 	Color       string
-	Description *string
 }
 
 // CreateFieldInput represents input for creating a field
@@ -49,8 +49,8 @@ type CreateFieldInput struct {
 
 // UpdateFieldInput represents input for updating a field
 type UpdateFieldInput struct {
-	FieldID string
 	Name    *string
+	FieldID string
 }
 
 // DeleteFieldInput represents input for deleting a field
@@ -60,18 +60,18 @@ type DeleteFieldInput struct {
 
 // CreateFieldOptionInput represents input for creating a field option
 type CreateFieldOptionInput struct {
+	Description *string
 	FieldID     string
 	Name        string
 	Color       string
-	Description *string
 }
 
 // UpdateFieldOptionInput represents input for updating a field option
 type UpdateFieldOptionInput struct {
-	OptionID    string
 	Name        *string
 	Color       *string
 	Description *string
+	OptionID    string
 }
 
 // DeleteFieldOptionInput represents input for deleting a field option
@@ -129,12 +129,15 @@ func (s *FieldService) DeleteField(ctx context.Context, input DeleteFieldInput) 
 }
 
 // CreateFieldOption creates a new single select field option
-func (s *FieldService) CreateFieldOption(ctx context.Context, input CreateFieldOptionInput) (*graphql.ProjectV2SingleSelectFieldOption, error) {
+func (s *FieldService) CreateFieldOption(
+	ctx context.Context,
+	input CreateFieldOptionInput,
+) (*graphql.ProjectV2SingleSelectFieldOption, error) {
 	description := ""
 	if input.Description != nil {
 		description = *input.Description
 	}
-	
+
 	variables := graphql.BuildCreateSingleSelectFieldOptionVariables(graphql.CreateSingleSelectFieldOptionInput{
 		FieldID:     input.FieldID,
 		Name:        input.Name,
@@ -152,7 +155,10 @@ func (s *FieldService) CreateFieldOption(ctx context.Context, input CreateFieldO
 }
 
 // UpdateFieldOption updates a single select field option
-func (s *FieldService) UpdateFieldOption(ctx context.Context, input UpdateFieldOptionInput) (*graphql.ProjectV2SingleSelectFieldOption, error) {
+func (s *FieldService) UpdateFieldOption(
+	ctx context.Context,
+	input UpdateFieldOptionInput,
+) (*graphql.ProjectV2SingleSelectFieldOption, error) {
 	variables := graphql.BuildUpdateSingleSelectFieldOptionVariables(graphql.UpdateSingleSelectFieldOptionInput{
 		OptionID:    input.OptionID,
 		Name:        input.Name,
@@ -223,8 +229,8 @@ func ValidateFieldName(name string) error {
 	if strings.TrimSpace(name) == "" {
 		return fmt.Errorf("field name cannot be empty")
 	}
-	if len(name) > 100 {
-		return fmt.Errorf("field name cannot exceed 100 characters")
+	if len(name) > maxFieldNameLength {
+		return fmt.Errorf("field name cannot exceed %d characters", maxFieldNameLength)
 	}
 	return nil
 }
@@ -251,13 +257,13 @@ func ValidateFieldType(dataType string) (graphql.ProjectV2FieldDataType, error) 
 func ValidateColor(color string) error {
 	validColors := graphql.ValidSingleSelectColors()
 	colorUpper := strings.ToUpper(color)
-	
+
 	for _, validColor := range validColors {
 		if colorUpper == validColor {
 			return nil
 		}
 	}
-	
+
 	return fmt.Errorf("invalid color: %s (valid colors: %s)", color, strings.ToLower(strings.Join(validColors, ", ")))
 }
 
@@ -288,7 +294,7 @@ func FormatFieldDataType(dataType graphql.ProjectV2FieldDataType) string {
 func FormatColor(color string) string {
 	// Convert to title case for display
 	lower := strings.ToLower(color)
-	if len(lower) > 0 {
+	if lower != "" {
 		return strings.ToUpper(lower[:1]) + lower[1:]
 	}
 	return color

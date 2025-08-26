@@ -1,11 +1,11 @@
 # ghp-cli
 
-[![CI](https://github.com/roboco-io/ghp-cli/workflows/CI/badge.svg)](https://github.com/roboco-io/ghp-cli/actions)
-[![Go Report Card](https://goreportcard.com/badge/github.com/roboco-io/ghp-cli)](https://goreportcard.com/report/github.com/roboco-io/ghp-cli)
-[![codecov](https://codecov.io/gh/roboco-io/ghp-cli/branch/main/graph/badge.svg)](https://codecov.io/gh/roboco-io/ghp-cli)
+[![CI](https://github.com/roboco-io/gh-project-cli/workflows/CI/badge.svg)](https://github.com/roboco-io/gh-project-cli/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/roboco-io/gh-project-cli)](https://goreportcard.com/report/github.com/roboco-io/gh-project-cli)
+[![codecov](https://codecov.io/gh/roboco-io/gh-project-cli/branch/main/graph/badge.svg)](https://codecov.io/gh/roboco-io/gh-project-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> 🚧 **Work in Progress** - This tool is under active development. See [Issues](https://github.com/roboco-io/ghp-cli/issues) for current status and roadmap.
+> 🚧 **Work in Progress** - This tool is under active development. See [Issues](https://github.com/roboco-io/gh-project-cli/issues) for current status and roadmap.
 
 **ghp-cli** is a powerful command-line interface for managing GitHub Projects v2. It provides complete control over GitHub Projects features that are missing or limited in the official `gh` CLI.
 
@@ -23,33 +23,53 @@ The official GitHub CLI (`gh`) has limited support for GitHub Projects v2. Our a
 
 ## Features
 
-### ✅ Current Features (MVP)
-- **Project Management**: Create, list, view, edit, delete, and copy projects
-- **Basic CLI Structure**: Full cobra-based command structure with configuration
-- **GitHub CLI Integration**: Reuses existing gh CLI authentication seamlessly
-- **Testing & CI/CD**: 100% test coverage with automated testing pipeline
+### ✅ Current Features
+
+#### Core Project Management
+- **Projects**: Create, list, view, edit, and delete projects
+- **Authentication**: GitHub CLI integration with token-based authentication
 - **Cross-platform**: Support for macOS, Linux, and Windows
 
-### 🚧 In Development (See [Issues](https://github.com/roboco-io/ghp-cli/issues))
+#### Item Management
+- **Items**: Add, list, view, edit, and remove project items
+- **Item Types**: Support for issues, pull requests, and draft items
+- **Advanced Search**: Search across GitHub repositories with filtering
 
-#### Phase 1: Core (MVP) - Q1 2024
-- [ ] GitHub CLI authentication integration
-- [ ] GraphQL client for GitHub Projects API v2  
-- [ ] Project management commands
-- [ ] Item management (issues, PRs, drafts)
-- [ ] Field management (text, number, date, select, iteration)
+#### Field Management
+- **Field Operations**: Create, list, update, and delete custom fields
+- **Field Types**: Support for text, number, date, single/multi-select, and iteration fields
+- **Field Options**: Manage select field options (add, update, delete)
 
-#### Phase 2: Advanced Features - Q2 2024
-- [ ] View management (table, board, roadmap)
-- [ ] Bulk operations (import/export CSV, JSON, Excel)
+#### View Management
+- **View Operations**: Create, list, update, delete, and copy project views
+- **View Layouts**: Support for table, board, and roadmap layouts
+- **View Configuration**: Sort and group views by custom fields
+- **View Filtering**: Apply filters to customize view content
+
+#### Workflow Automation
+- **Workflows**: Create, list, update, delete, enable, and disable workflows
+- **Triggers**: Add triggers for automation (field changes, item events)
+- **Actions**: Add actions for automation (set field, move item, notify, assign, etc.)
+- **Action Types**: set-field, clear-field, move-to-column, archive-item, notify, assign, add-comment
+
+#### Analytics & Reporting
+- **Analytics**: Project overview and bulk operations
+- **Export**: Export project data in various formats
+- **Reporting**: Basic project statistics and insights
+
+### 🚧 In Development (See [Issues](https://github.com/roboco-io/gh-project-cli/issues))
+
+#### Phase 2: Enhanced Features - Q2 2024
 - [ ] Interactive TUI mode with Bubble Tea
-- [ ] Advanced filtering and sorting
+- [ ] Bulk import/export (CSV, JSON, Excel)
+- [ ] Advanced filtering and search operators
+- [ ] Iteration management and sprint planning
 
-#### Phase 3: Automation & Analytics - Q3 2024
-- [ ] Automation workflows
-- [ ] Reporting and analytics
+#### Phase 3: Advanced Analytics - Q3 2024
 - [ ] Burndown and velocity charts
 - [ ] Custom report templates
+- [ ] Time tracking and reporting
+- [ ] Progress visualization
 
 #### Phase 4: Enterprise Features - Q4 2024
 - [ ] Cross-repository projects
@@ -67,19 +87,19 @@ brew install ghp-cli
 
 ### Go Install
 ```bash
-go install github.com/roboco-io/ghp-cli@latest
+go install github.com/roboco-io/gh-project-cli@latest
 ```
 
 ### Download Binary
 ```bash
-curl -L https://github.com/roboco-io/ghp-cli/releases/latest/download/ghp-$(uname -s)-$(uname -m) -o ghp
+curl -L https://github.com/roboco-io/gh-project-cli/releases/latest/download/ghp-$(uname -s)-$(uname -m) -o ghp
 chmod +x ghp
 mv ghp /usr/local/bin/
 ```
 
 ### Docker
 ```bash
-docker run --rm ghcr.io/roboco-io/ghp-cli:latest --help
+docker run --rm ghcr.io/roboco-io/gh-project-cli:latest --help
 ```
 
 ## Quick Start
@@ -191,7 +211,7 @@ graph TB
 
 ### Setup
 ```bash
-git clone https://github.com/roboco-io/ghp-cli.git
+git clone https://github.com/roboco-io/gh-project-cli.git
 cd ghp-cli
 make setup
 ```
@@ -216,7 +236,7 @@ We welcome contributions! Please see:
 - [Contributing Guide](CONTRIBUTING.md)
 - [Development Setup](docs/DEVELOPMENT.md)
 - [Architecture Overview](docs/ARCHITECTURE.md)
-- [Open Issues](https://github.com/roboco-io/ghp-cli/issues)
+- [Open Issues](https://github.com/roboco-io/gh-project-cli/issues)
 
 ## Roadmap
 
@@ -225,9 +245,9 @@ See our [detailed roadmap](docs/PRD.md#14-타임라인) and [feature comparison]
 ## Support
 
 - 📖 [Documentation](docs/)
-- 🐛 [Bug Reports](https://github.com/roboco-io/ghp-cli/issues/new?template=bug_report.md)
-- 💡 [Feature Requests](https://github.com/roboco-io/ghp-cli/issues/new?template=feature_request.md)
-- 💬 [Discussions](https://github.com/roboco-io/ghp-cli/discussions)
+- 🐛 [Bug Reports](https://github.com/roboco-io/gh-project-cli/issues/new?template=bug_report.md)
+- 💡 [Feature Requests](https://github.com/roboco-io/gh-project-cli/issues/new?template=feature_request.md)
+- 💬 [Discussions](https://github.com/roboco-io/gh-project-cli/discussions)
 
 ## License
 

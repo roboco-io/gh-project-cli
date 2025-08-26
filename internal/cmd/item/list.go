@@ -7,9 +7,27 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
+)
+
+const (
+	defaultListLimit          = 20
+	tableHeaderSeparatorWidth = 100
+	maxItemTypeLength         = 10
+	itemTypeTruncateLength    = 7
+	maxStateLength            = 8
+	stateTruncateLength       = 5
+	maxNumberLength           = 6
+	numberTruncateLength      = 3
+	maxTitleLength            = 28
+	listTitleTruncateLength   = 25
+	maxRepositoryLength       = 18
+	repositoryTruncateLength  = 15
+	maxAuthorLength           = 13
+	authorTruncateLength      = 10
+	dateOnlyLength            = 10
 )
 
 // ListOptions holds options for the list command
@@ -20,9 +38,9 @@ type ListOptions struct {
 	State      string
 	Author     string
 	Assignee   string
+	Format     string
 	Labels     []string
 	Limit      int
-	Format     string
 }
 
 // NewListCmd creates the list command
@@ -58,7 +76,7 @@ Examples:
 	cmd.Flags().StringVar(&opts.Author, "author", "", "Filter by author username")
 	cmd.Flags().StringVar(&opts.Assignee, "assignee", "", "Filter by assignee username")
 	cmd.Flags().StringSliceVar(&opts.Labels, "label", nil, "Filter by labels (can be used multiple times)")
-	cmd.Flags().IntVarP(&opts.Limit, "limit", "L", 20, "Maximum number of items to list")
+	cmd.Flags().IntVarP(&opts.Limit, "limit", "L", defaultListLimit, "Maximum number of items to list")
 	cmd.Flags().StringVar(&opts.Format, "format", "table", "Output format: table, json")
 
 	return cmd
@@ -142,7 +160,7 @@ func searchItems(ctx context.Context, itemService *service.ItemService, opts *Li
 		Query:      opts.Search,
 	}
 
-	searchQuery := service.BuildSearchQuery(filters)
+	searchQuery := service.BuildSearchQuery(&filters)
 	if searchQuery == "" {
 		return nil, fmt.Errorf("no search criteria specified")
 	}
@@ -171,58 +189,66 @@ func searchItems(ctx context.Context, itemService *service.ItemService, opts *Li
 }
 
 func applyFilters(items []service.ItemInfo, opts *ListOptions) []service.ItemInfo {
-	var filtered []service.ItemInfo
+	filtered := make([]service.ItemInfo, 0, len(items))
 
-	for _, item := range items {
-		// Apply author filter
-		if opts.Author != "" && item.Author != nil && *item.Author != opts.Author {
-			continue
+	for i := range items {
+		if passesAuthorFilter(&items[i], opts.Author) &&
+			passesAssigneeFilter(&items[i], opts.Assignee) &&
+			passesLabelsFilter(&items[i], opts.Labels) {
+			filtered = append(filtered, items[i])
 		}
-
-		// Apply assignee filter
-		if opts.Assignee != "" {
-			found := false
-			for _, assignee := range item.Assignees {
-				if assignee == opts.Assignee || (opts.Assignee == "@me" && assignee == "current-user") {
-					found = true
-					break
-				}
-			}
-			if !found {
-				continue
-			}
-		}
-
-		// Apply label filters
-		if len(opts.Labels) > 0 {
-			hasAllLabels := true
-			for _, requiredLabel := range opts.Labels {
-				found := false
-				for _, itemLabel := range item.Labels {
-					if itemLabel == requiredLabel {
-						found = true
-						break
-					}
-				}
-				if !found {
-					hasAllLabels = false
-					break
-				}
-			}
-			if !hasAllLabels {
-				continue
-			}
-		}
-
-		filtered = append(filtered, item)
 	}
 
-	// Limit results
-	if opts.Limit > 0 && len(filtered) > opts.Limit {
-		filtered = filtered[:opts.Limit]
+	return applyLimit(filtered, opts.Limit)
+}
+
+func passesAuthorFilter(item *service.ItemInfo, authorFilter string) bool {
+	if authorFilter == "" {
+		return true
+	}
+	return item.Author != nil && *item.Author == authorFilter
+}
+
+func passesAssigneeFilter(item *service.ItemInfo, assigneeFilter string) bool {
+	if assigneeFilter == "" {
+		return true
 	}
 
-	return filtered
+	for _, assignee := range item.Assignees {
+		if assignee == assigneeFilter || (assigneeFilter == "@me" && assignee == "current-user") {
+			return true
+		}
+	}
+	return false
+}
+
+func passesLabelsFilter(item *service.ItemInfo, labelFilters []string) bool {
+	if len(labelFilters) == 0 {
+		return true
+	}
+
+	for _, requiredLabel := range labelFilters {
+		if !itemHasLabel(item, requiredLabel) {
+			return false
+		}
+	}
+	return true
+}
+
+func itemHasLabel(item *service.ItemInfo, requiredLabel string) bool {
+	for _, itemLabel := range item.Labels {
+		if itemLabel == requiredLabel {
+			return true
+		}
+	}
+	return false
+}
+
+func applyLimit(items []service.ItemInfo, limit int) []service.ItemInfo {
+	if limit > 0 && len(items) > limit {
+		return items[:limit]
+	}
+	return items
 }
 
 func outputItems(items []service.ItemInfo, format string) error {
@@ -232,7 +258,7 @@ func outputItems(items []service.ItemInfo, format string) error {
 	}
 
 	switch format {
-	case "json":
+	case formatJSON:
 		return outputItemsJSON(items)
 	case "table":
 		return outputItemsTable(items)
@@ -242,68 +268,75 @@ func outputItems(items []service.ItemInfo, format string) error {
 }
 
 func outputItemsTable(items []service.ItemInfo) error {
-	// Print header
-	fmt.Printf("%-10s %-8s %-6s %-30s %-20s %-15s %-12s\n",
-		"TYPE", "STATE", "NUMBER", "TITLE", "REPOSITORY", "AUTHOR", "UPDATED")
-	fmt.Println(strings.Repeat("-", 100))
+	printItemTableHeader()
 
-	// Print items
-	for _, item := range items {
-		itemType := item.Type
-		if len(itemType) > 10 {
-			itemType = itemType[:7] + "..."
-		}
-
-		state := item.State
-		if len(state) > 8 {
-			state = state[:5] + "..."
-		}
-
-		number := ""
-		if item.Number != nil {
-			number = fmt.Sprintf("#%d", *item.Number)
-		}
-		if len(number) > 6 {
-			number = number[:3] + "..."
-		}
-
-		title := item.Title
-		if len(title) > 28 {
-			title = title[:25] + "..."
-		}
-
-		repository := ""
-		if item.Repository != nil {
-			repository = *item.Repository
-		}
-		if len(repository) > 18 {
-			repository = repository[:15] + "..."
-		}
-
-		author := ""
-		if item.Author != nil {
-			author = *item.Author
-		}
-		if len(author) > 13 {
-			author = author[:10] + "..."
-		}
-
-		updated := item.UpdatedAt
-		if len(updated) > 10 {
-			updated = updated[:10] // Keep only date part
-		}
-
-		fmt.Printf("%-10s %-8s %-6s %-30s %-20s %-15s %-12s\n",
-			itemType, state, number, title, repository, author, updated)
+	for i := range items {
+		printItemTableRow(&items[i])
 	}
 
 	return nil
 }
 
+func printItemTableHeader() {
+	fmt.Printf("%-10s %-8s %-6s %-30s %-20s %-15s %-12s\n",
+		"TYPE", "STATE", "NUMBER", "TITLE", "REPOSITORY", "AUTHOR", "UPDATED")
+	fmt.Println(strings.Repeat("-", tableHeaderSeparatorWidth))
+}
+
+func printItemTableRow(item *service.ItemInfo) {
+	itemType := truncateString(item.Type, maxItemTypeLength, itemTypeTruncateLength)
+	state := truncateString(item.State, maxStateLength, stateTruncateLength)
+	number := formatItemNumber(item.Number)
+	title := truncateString(item.Title, maxTitleLength, listTitleTruncateLength)
+	repository := formatItemRepository(item.Repository)
+	author := formatItemAuthor(item.Author)
+	updated := formatItemDate(item.UpdatedAt)
+
+	fmt.Printf("%-10s %-8s %-6s %-30s %-20s %-15s %-12s\n",
+		itemType, state, number, title, repository, author, updated)
+}
+
+func truncateString(s string, maxLen, truncateLen int) string {
+	if len(s) > maxLen {
+		return s[:truncateLen] + "..."
+	}
+	return s
+}
+
+func formatItemNumber(number *int) string {
+	if number == nil {
+		return ""
+	}
+	result := fmt.Sprintf("#%d", *number)
+	return truncateString(result, maxNumberLength, numberTruncateLength)
+}
+
+func formatItemRepository(repository *string) string {
+	if repository == nil {
+		return ""
+	}
+	return truncateString(*repository, maxRepositoryLength, repositoryTruncateLength)
+}
+
+func formatItemAuthor(author *string) string {
+	if author == nil {
+		return ""
+	}
+	return truncateString(*author, maxAuthorLength, authorTruncateLength)
+}
+
+func formatItemDate(updated string) string {
+	if len(updated) > dateOnlyLength {
+		return updated[:dateOnlyLength] // Keep only date part
+	}
+	return updated
+}
+
 func outputItemsJSON(items []service.ItemInfo) error {
 	// Simplified JSON output
 	fmt.Println("[")
-	for i, item := range items {
+	for i := range items {
+		item := &items[i]
 		fmt.Printf("  {\n")
 		fmt.Printf("    \"type\": \"%s\",\n", item.Type)
 		fmt.Printf("    \"title\": \"%s\",\n", item.Title)

@@ -8,18 +8,18 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // ViewOptions holds options for the view command
 type ViewOptions struct {
 	Owner  string
+	Format string
 	Number int
 	Org    bool
-	Format string
 	Fields bool
 	Items  bool
 	Web    bool
@@ -142,7 +142,7 @@ func outputProjectDetailsTable(project *graphql.ProjectV2, opts *ViewOptions) er
 	if opts.Fields && len(project.Fields.Nodes) > 0 {
 		fmt.Printf("\nFields:\n")
 		fmt.Printf("%-20s %-15s %-10s\n", "NAME", "TYPE", "OPTIONS")
-		fmt.Println(strings.Repeat("-", 45))
+		fmt.Println(strings.Repeat("-", fieldsTableWidth))
 
 		for _, field := range project.Fields.Nodes {
 			optionCount := len(field.Options.Nodes)
@@ -159,9 +159,10 @@ func outputProjectDetailsTable(project *graphql.ProjectV2, opts *ViewOptions) er
 	if opts.Items && len(project.Items.Nodes) > 0 {
 		fmt.Printf("\nItems:\n")
 		fmt.Printf("%-10s %-30s %-10s %-15s\n", "TYPE", "TITLE", "STATE", "URL")
-		fmt.Println(strings.Repeat("-", 65))
+		fmt.Println(strings.Repeat("-", itemsTableWidth))
 
-		for _, item := range project.Items.Nodes {
+		for i := range project.Items.Nodes {
+			item := &project.Items.Nodes[i]
 			var title, state, url string
 
 			switch item.Content.TypeName {
@@ -183,7 +184,7 @@ func outputProjectDetailsTable(project *graphql.ProjectV2, opts *ViewOptions) er
 				url = "-"
 			}
 
-			if len(title) > 28 {
+			if len(title) > titleMaxLength {
 				title = title[:25] + "..."
 			}
 
@@ -204,7 +205,7 @@ func outputProjectDetailsJSON(project *graphql.ProjectV2) error {
 
 	description := "null"
 	if project.Description != nil {
-		description = fmt.Sprintf("\"%s\"", *project.Description)
+		description = fmt.Sprintf("%q", *project.Description)
 	}
 
 	fmt.Printf("{\n")

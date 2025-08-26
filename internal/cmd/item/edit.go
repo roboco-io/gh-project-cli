@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // EditOptions holds options for the edit command
@@ -55,8 +55,8 @@ Examples:
 	cmd.Flags().StringVar(&opts.Value, "value", "", "New field value (required)")
 	cmd.Flags().StringVar(&opts.Format, "format", "table", "Output format: table, json")
 
-	cmd.MarkFlagRequired("field")
-	cmd.MarkFlagRequired("value")
+	_ = cmd.MarkFlagRequired("field")
+	_ = cmd.MarkFlagRequired("value")
 
 	return cmd
 }
@@ -95,7 +95,7 @@ func runEdit(ctx context.Context, opts *EditOptions) error {
 	}
 
 	if fieldID == "" {
-		return fmt.Errorf("field '%s' not found in project. Available fields:", opts.FieldName)
+		return fmt.Errorf("field '%s' not found in project. Available fields", opts.FieldName)
 	}
 
 	// Prepare field value based on field type
@@ -105,7 +105,7 @@ func runEdit(ctx context.Context, opts *EditOptions) error {
 	fieldValue = opts.Value
 
 	// If value looks like a number, try to convert it
-	if numValue, err := strconv.ParseFloat(opts.Value, 64); err == nil {
+	if numValue, parseErr := strconv.ParseFloat(opts.Value, 64); parseErr == nil {
 		fieldValue = numValue
 	}
 
@@ -126,9 +126,9 @@ func runEdit(ctx context.Context, opts *EditOptions) error {
 	return outputUpdatedItem(item, opts.Format, opts.FieldName, opts.Value)
 }
 
-func outputUpdatedItem(item interface{}, format, fieldName, value string) error {
+func outputUpdatedItem(_ interface{}, format, fieldName, value string) error {
 	switch format {
-	case "json":
+	case formatJSON:
 		return outputUpdatedItemJSON(fieldName, value)
 	case "table":
 		return outputUpdatedItemTable(fieldName, value)

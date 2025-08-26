@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // AddActionOptions holds options for the add-action command
@@ -81,31 +81,8 @@ func runAddAction(ctx context.Context, opts *AddActionOptions) error {
 	}
 
 	// Validate required parameters based on action type
-	switch actionType {
-	case graphql.ProjectV2WorkflowActionTypeSetField:
-		if opts.FieldID == "" || opts.Value == "" {
-			return fmt.Errorf("set-field action requires both --field and --value parameters")
-		}
-	case graphql.ProjectV2WorkflowActionTypeClearField:
-		if opts.FieldID == "" {
-			return fmt.Errorf("clear-field action requires --field parameter")
-		}
-	case graphql.ProjectV2WorkflowActionTypeMoveToColumn:
-		if opts.ViewID == "" || opts.Column == "" {
-			return fmt.Errorf("move-to-column action requires both --view and --column parameters")
-		}
-	case graphql.ProjectV2WorkflowActionTypeNotify:
-		if opts.Message == "" {
-			return fmt.Errorf("notify action requires --message parameter")
-		}
-	case graphql.ProjectV2WorkflowActionTypeAssign:
-		if opts.Value == "" {
-			return fmt.Errorf("assign action requires --value parameter with username")
-		}
-	case graphql.ProjectV2WorkflowActionTypeAddComment:
-		if opts.Message == "" {
-			return fmt.Errorf("add-comment action requires --message parameter")
-		}
+	if validationErr := validateActionParameters(actionType, opts); validationErr != nil {
+		return validationErr
 	}
 
 	// Initialize authentication
@@ -151,11 +128,81 @@ func runAddAction(ctx context.Context, opts *AddActionOptions) error {
 	return outputAddedAction(&input, opts.Format)
 }
 
+func validateActionParameters(actionType graphql.ProjectV2WorkflowActionType, opts *AddActionOptions) error {
+	validationRules := map[graphql.ProjectV2WorkflowActionType]func(*AddActionOptions) error{
+		graphql.ProjectV2WorkflowActionTypeSetField:     validateSetFieldAction,
+		graphql.ProjectV2WorkflowActionTypeClearField:   validateClearFieldAction,
+		graphql.ProjectV2WorkflowActionTypeMoveToColumn: validateMoveToColumnAction,
+		graphql.ProjectV2WorkflowActionTypeNotify:       validateNotifyAction,
+		graphql.ProjectV2WorkflowActionTypeAssign:       validateAssignAction,
+		graphql.ProjectV2WorkflowActionTypeAddComment:   validateAddCommentAction,
+		graphql.ProjectV2WorkflowActionTypeArchiveItem:  validateArchiveItemAction,
+		graphql.ProjectV2WorkflowActionTypeAddToProject: validateAddToProjectAction,
+	}
+
+	if validator, exists := validationRules[actionType]; exists {
+		return validator(opts)
+	}
+	return nil
+}
+
+func validateSetFieldAction(opts *AddActionOptions) error {
+	if opts.FieldID == "" || opts.Value == "" {
+		return fmt.Errorf("set-field action requires both --field and --value parameters")
+	}
+	return nil
+}
+
+func validateClearFieldAction(opts *AddActionOptions) error {
+	if opts.FieldID == "" {
+		return fmt.Errorf("clear-field action requires --field parameter")
+	}
+	return nil
+}
+
+func validateMoveToColumnAction(opts *AddActionOptions) error {
+	if opts.ViewID == "" || opts.Column == "" {
+		return fmt.Errorf("move-to-column action requires both --view and --column parameters")
+	}
+	return nil
+}
+
+func validateNotifyAction(opts *AddActionOptions) error {
+	if opts.Message == "" {
+		return fmt.Errorf("notify action requires --message parameter")
+	}
+	return nil
+}
+
+func validateAssignAction(opts *AddActionOptions) error {
+	if opts.Value == "" {
+		return fmt.Errorf("assign action requires --value parameter with username")
+	}
+	return nil
+}
+
+func validateAddCommentAction(opts *AddActionOptions) error {
+	if opts.Message == "" {
+		return fmt.Errorf("add-comment action requires --message parameter")
+	}
+	return nil
+}
+
+func validateArchiveItemAction(_ *AddActionOptions) error {
+	// No additional parameters required for archive-item
+	return nil
+}
+
+func validateAddToProjectAction(_ *AddActionOptions) error {
+	// Future implementation - no validation needed yet
+	return nil
+}
+
 func outputAddedAction(input *service.CreateActionInput, format string) error {
 	switch format {
-	case "json":
+	case formatJSON:
 		return outputAddedActionJSON(input)
-	case "table":
+	case formatTable:
 		return outputAddedActionTable(input)
 	default:
 		return fmt.Errorf("unknown format: %s", format)

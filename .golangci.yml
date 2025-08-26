@@ -75,7 +75,7 @@ linters-settings:
   gocyclo:
     min-complexity: 15
   goimports:
-    local-prefixes: github.com/roboco-io/ghp-cli
+    local-prefixes: github.com/roboco-io/gh-project-cli
   mnd:
     checks:
       - argument

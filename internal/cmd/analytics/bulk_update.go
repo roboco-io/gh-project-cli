@@ -8,17 +8,21 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
+)
+
+const (
+	bulkPercentageMultiplier = 100.0
 )
 
 // BulkUpdateOptions holds options for the bulk-update command
 type BulkUpdateOptions struct {
-	ProjectRef string
-	ItemIDs    []string
 	Updates    map[string]interface{}
+	ProjectRef string
 	Format     string
+	ItemIDs    []string
 }
 
 // NewBulkUpdateCmd creates the bulk-update command
@@ -100,7 +104,7 @@ Examples:
 	cmd.Flags().Bool("org", false, "Target organization project")
 
 	// Make items flag required
-	cmd.MarkFlagRequired("items")
+	_ = cmd.MarkFlagRequired("items")
 
 	return cmd
 }
@@ -165,9 +169,9 @@ func runBulkUpdate(ctx context.Context, opts *BulkUpdateOptions) error {
 
 func outputBulkOperation(operation *service.BulkOperation, operationType, format string) error {
 	switch format {
-	case "json":
+	case FormatJSON:
 		return outputBulkOperationJSON(operation)
-	case "table":
+	case FormatTable:
 		return outputBulkOperationTable(operation, operationType)
 	default:
 		return fmt.Errorf("unknown format: %s", format)
@@ -181,7 +185,7 @@ func outputBulkOperationTable(operation *service.BulkOperation, operationType st
 	fmt.Printf("  Operation ID: %s\n", operation.ID)
 	fmt.Printf("  Type: %s\n", service.FormatBulkOperationType(operation.Type))
 	fmt.Printf("  Status: %s\n", service.FormatBulkOperationStatus(operation.Status))
-	fmt.Printf("  Progress: %.1f%%\n", operation.Progress*100)
+	fmt.Printf("  Progress: %.1f%%\n", operation.Progress*bulkPercentageMultiplier)
 	fmt.Printf("  Total Items: %d\n", operation.TotalItems)
 	fmt.Printf("  Processed Items: %d\n", operation.ProcessedItems)
 	if operation.FailedItems > 0 {

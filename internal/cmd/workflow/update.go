@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
-	"github.com/roboco-io/ghp-cli/internal/auth"
-	"github.com/roboco-io/ghp-cli/internal/service"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // UpdateOptions holds options for the update command
@@ -42,7 +42,7 @@ Examples:
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.WorkflowID = args[0]
 			opts.Format = cmd.Flag("format").Value.String()
-			
+
 			// Handle enable/disable flags
 			if enable, _ := cmd.Flags().GetBool("enable"); enable {
 				enabled := true
@@ -52,7 +52,7 @@ Examples:
 				enabled := false
 				opts.Enabled = &enabled
 			}
-			
+
 			return runUpdate(cmd.Context(), opts)
 		},
 	}
@@ -124,27 +124,7 @@ func outputUpdatedWorkflow(workflow *graphql.ProjectV2Workflow, format string) e
 func outputUpdatedWorkflowTable(workflow *graphql.ProjectV2Workflow) error {
 	fmt.Printf("✅ Workflow '%s' updated successfully\n\n", workflow.Name)
 
-	fmt.Printf("Workflow Details:\n")
-	fmt.Printf("  ID: %s\n", workflow.ID)
-	fmt.Printf("  Name: %s\n", workflow.Name)
-	
-	status := "Enabled"
-	if !workflow.Enabled {
-		status = "Disabled"
-	}
-	fmt.Printf("  Status: %s\n", status)
-
-	if len(workflow.Triggers) > 0 {
-		fmt.Printf("  Triggers: %d configured\n", len(workflow.Triggers))
-	} else {
-		fmt.Printf("  Triggers: None\n")
-	}
-
-	if len(workflow.Actions) > 0 {
-		fmt.Printf("  Actions: %d configured\n", len(workflow.Actions))
-	} else {
-		fmt.Printf("  Actions: None\n")
-	}
+	outputWorkflowDetails(workflow)
 
 	return nil
 }

@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
 )
 
 // ItemService handles item-related operations
@@ -84,7 +84,8 @@ func (s *ItemService) SearchIssues(ctx context.Context, searchQuery string, limi
 	}
 
 	items := make([]ItemInfo, 0, len(query.Search.Nodes))
-	for _, node := range query.Search.Nodes {
+	for i := range query.Search.Nodes {
+		node := &query.Search.Nodes[i]
 		issue := node.Issue
 
 		labels := make([]string, len(issue.Labels.Nodes))
@@ -136,7 +137,8 @@ func (s *ItemService) SearchPullRequests(ctx context.Context, searchQuery string
 	}
 
 	items := make([]ItemInfo, 0, len(query.Search.Nodes))
-	for _, node := range query.Search.Nodes {
+	for i := range query.Search.Nodes {
+		node := &query.Search.Nodes[i]
 		pr := node.PullRequest
 
 		labels := make([]string, len(pr.Labels.Nodes))
@@ -195,7 +197,8 @@ func (s *ItemService) ListRepositoryIssues(ctx context.Context, owner, repo stri
 	}
 
 	items := make([]ItemInfo, len(query.Repository.Issues.Nodes))
-	for i, issue := range query.Repository.Issues.Nodes {
+	for i := range query.Repository.Issues.Nodes {
+		issue := &query.Repository.Issues.Nodes[i]
 		labels := make([]string, len(issue.Labels.Nodes))
 		for j, label := range issue.Labels.Nodes {
 			labels[j] = label.Name
@@ -247,7 +250,8 @@ func (s *ItemService) ListRepositoryPullRequests(ctx context.Context, owner, rep
 	}
 
 	items := make([]ItemInfo, len(query.Repository.PullRequests.Nodes))
-	for i, pr := range query.Repository.PullRequests.Nodes {
+	for i := range query.Repository.PullRequests.Nodes {
+		pr := &query.Repository.PullRequests.Nodes[i]
 		labels := make([]string, len(pr.Labels.Nodes))
 		for j, label := range pr.Labels.Nodes {
 			labels[j] = label.Name
@@ -392,7 +396,7 @@ func parseGitHubURL(url string) (owner, repo string, number int, err error) {
 	path := strings.TrimPrefix(url, "https://github.com/")
 
 	parts := strings.Split(path, "/")
-	if len(parts) < 4 {
+	if len(parts) < minSearchPartsLength {
 		return "", "", 0, fmt.Errorf("invalid GitHub URL format: %s", url)
 	}
 
@@ -415,8 +419,8 @@ func FormatItemReference(owner, repo string, number int) string {
 }
 
 // BuildSearchQuery builds a search query for items based on filters
-func BuildSearchQuery(filters SearchFilters) string {
-	var parts []string
+func BuildSearchQuery(filters *SearchFilters) string {
+	parts := make([]string, 0, defaultSearchPartsSize)
 
 	// Base type filter
 	if filters.Type == "issue" {
@@ -460,11 +464,11 @@ func BuildSearchQuery(filters SearchFilters) string {
 
 // SearchFilters represents filters for searching items
 type SearchFilters struct {
-	Type       string   // "issue", "pr", "pullrequest"
-	State      string   // "open", "closed", "merged"
-	Repository string   // "owner/repo"
-	Author     string   // username
-	Assignee   string   // username
-	Labels     []string // label names
-	Query      string   // free text search
+	Type       string
+	State      string
+	Repository string
+	Author     string
+	Assignee   string
+	Query      string
+	Labels     []string
 }

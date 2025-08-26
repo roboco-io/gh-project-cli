@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/roboco-io/ghp-cli/cmd"
+	"github.com/roboco-io/gh-project-cli/cmd"
 )
 
 // Version information set by build flags

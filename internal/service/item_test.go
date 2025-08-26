@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api"
 )
 
 func TestItemService(t *testing.T) {
@@ -138,7 +138,7 @@ func TestBuildSearchQuery(t *testing.T) {
 			State: "open",
 		}
 
-		query := BuildSearchQuery(filters)
+		query := BuildSearchQuery(&filters)
 		assert.Contains(t, query, "is:issue")
 		assert.Contains(t, query, "is:open")
 	})
@@ -150,7 +150,7 @@ func TestBuildSearchQuery(t *testing.T) {
 			Repository: "octocat/Hello-World",
 		}
 
-		query := BuildSearchQuery(filters)
+		query := BuildSearchQuery(&filters)
 		assert.Contains(t, query, "is:pr")
 		assert.Contains(t, query, "is:closed")
 		assert.Contains(t, query, "repo:octocat/Hello-World")
@@ -167,7 +167,7 @@ func TestBuildSearchQuery(t *testing.T) {
 			Query:      "authentication error",
 		}
 
-		query := BuildSearchQuery(filters)
+		query := BuildSearchQuery(&filters)
 		assert.Contains(t, query, "is:issue")
 		assert.Contains(t, query, "is:open")
 		assert.Contains(t, query, "repo:octocat/Hello-World")
@@ -183,14 +183,14 @@ func TestBuildSearchQuery(t *testing.T) {
 			Type: "pullrequest",
 		}
 
-		query := BuildSearchQuery(filters)
+		query := BuildSearchQuery(&filters)
 		assert.Contains(t, query, "is:pr")
 	})
 
 	t.Run("Build empty query", func(t *testing.T) {
 		filters := SearchFilters{}
 
-		query := BuildSearchQuery(filters)
+		query := BuildSearchQuery(&filters)
 		assert.Equal(t, "", query)
 	})
 }

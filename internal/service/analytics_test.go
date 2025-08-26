@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/roboco-io/ghp-cli/internal/api"
-	"github.com/roboco-io/ghp-cli/internal/api/graphql"
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/api/graphql"
 )
 
 var testCtx = context.Background()
@@ -386,7 +386,7 @@ func TestFormatBulkOperationStatus(t *testing.T) {
 		{graphql.BulkOperationStatusRunning, "Running"},
 		{graphql.BulkOperationStatusCompleted, "Completed"},
 		{graphql.BulkOperationStatusFailed, "Failed"},
-		{graphql.BulkOperationStatusCancelled, "Cancelled"},
+		{graphql.BulkOperationStatusCancelled, "Canceled"},
 	}
 
 	for _, tt := range tests {

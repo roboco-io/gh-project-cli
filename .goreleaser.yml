@@ -75,7 +75,7 @@ changelog:
 brews:
   - name: ghp-cli
     description: "Powerful CLI tool for GitHub Projects"
-    homepage: "https://github.com/roboco-io/ghp-cli"
+    homepage: "https://github.com/roboco-io/gh-project-cli"
     repository:
       owner: roboco-io
       name: homebrew-tap
@@ -106,7 +106,7 @@ nfpms:
     package_name: ghp-cli
     file_name_template: "{{ .ConventionalFileName }}"
     vendor: Roboco
-    homepage: https://github.com/roboco-io/ghp-cli
+    homepage: https://github.com/roboco-io/gh-project-cli
     maintainer: Roboco <support@roboco.io>
     description: Powerful CLI tool for GitHub Projects
     license: MIT
