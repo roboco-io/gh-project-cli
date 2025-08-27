@@ -34,9 +34,11 @@ https://docs.github.com/en/issues/planning-and-tracking-with-projects`,
 
 	// Add subcommands
 	cmd.AddCommand(NewAddCmd())
+	cmd.AddCommand(NewAddBulkCmd())
 	cmd.AddCommand(NewEditCmd())
 	cmd.AddCommand(NewListCmd())
 	cmd.AddCommand(NewRemoveCmd())
+	cmd.AddCommand(NewUpdateBulkCmd())
 	cmd.AddCommand(NewViewCmd())
 
 	return cmd

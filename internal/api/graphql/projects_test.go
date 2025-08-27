@@ -74,7 +74,7 @@ func TestVariableBuilders(t *testing.T) {
 			Title:   "Test Project",
 		}
 
-		variables := BuildCreateProjectVariables(input)
+		variables := BuildCreateProjectVariables(&input)
 
 		assert.NotNil(t, variables)
 		assert.Contains(t, variables, "input")

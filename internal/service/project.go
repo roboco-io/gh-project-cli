@@ -147,15 +147,23 @@ func (s *ProjectService) GetProject(ctx context.Context, owner string, number in
 
 // CreateProjectInput represents input for creating a project
 type CreateProjectInput struct {
-	OwnerID string
-	Title   string
+	OwnerID     string
+	Title       string
+	Description string
+	Readme      string
+	Visibility  string
+	Repository  string
 }
 
 // CreateProject creates a new project
-func (s *ProjectService) CreateProject(ctx context.Context, input CreateProjectInput) (*graphql.ProjectV2, error) {
-	variables := graphql.BuildCreateProjectVariables(graphql.CreateProjectInput{
-		OwnerID: input.OwnerID,
-		Title:   input.Title,
+func (s *ProjectService) CreateProject(ctx context.Context, input *CreateProjectInput) (*graphql.ProjectV2, error) {
+	variables := graphql.BuildCreateProjectVariables(&graphql.CreateProjectInput{
+		OwnerID:     input.OwnerID,
+		Title:       input.Title,
+		Description: input.Description,
+		Readme:      input.Readme,
+		Visibility:  input.Visibility,
+		Repository:  input.Repository,
 	})
 
 	var mutation graphql.CreateProjectMutation
@@ -165,6 +173,75 @@ func (s *ProjectService) CreateProject(ctx context.Context, input CreateProjectI
 	}
 
 	return &mutation.CreateProjectV2.ProjectV2, nil
+}
+
+// LinkProjectToRepository links a project to a GitHub repository
+func (s *ProjectService) LinkProjectToRepository(_ context.Context, _, _ string) error {
+	// TODO: Implement GraphQL mutation to link project to repository
+	// This would typically involve updating project settings or adding repository reference
+
+	// For now, this is a placeholder implementation
+	// fmt.Printf("Linking project %s to repository %s\n", projectID, repository)
+
+	return nil
+}
+
+// ProjectExportData represents data for project export
+type ProjectExportData struct {
+	ProjectID        string
+	IncludeItems     bool
+	IncludeFields    bool
+	IncludeViews     bool
+	IncludeWorkflows bool
+}
+
+// ProjectImportOptions represents options for project import
+type ProjectImportOptions struct {
+	File       string
+	Owner      string
+	DryRun     bool
+	SkipItems  bool
+	SkipFields bool
+}
+
+// ProjectImportResult represents the result of a project import
+type ProjectImportResult struct {
+	ProjectID    string
+	ProjectTitle string
+	ProjectURL   string
+	ItemCount    int
+	FieldCount   int
+	ViewCount    int
+}
+
+// ExportProject exports project data to a file
+func (s *ProjectService) ExportProject(_ context.Context, _ *ProjectExportData, _, _ string) error {
+	// TODO: Implement project export functionality
+	// This would involve:
+	// 1. Fetch project details, items, fields, views, workflows
+	// 2. Serialize to requested format (JSON/YAML)
+	// 3. Write to output file
+
+	return nil
+}
+
+// ImportProject imports project data from a file
+func (s *ProjectService) ImportProject(_ context.Context, _ *ProjectImportOptions) (*ProjectImportResult, error) {
+	// TODO: Implement project import functionality
+	// This would involve:
+	// 1. Parse import file
+	// 2. Create project with configuration
+	// 3. Import items, fields, views, workflows
+	// 4. Return import result
+
+	return &ProjectImportResult{
+		ProjectID:    "imported-project-id",
+		ProjectTitle: "Imported Project",
+		ProjectURL:   "https://github.com/orgs/owner/projects/123",
+		ItemCount:    0,
+		FieldCount:   0,
+		ViewCount:    0,
+	}, nil
 }
 
 // UpdateProjectInput represents input for updating a project

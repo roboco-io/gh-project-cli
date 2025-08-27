@@ -3,6 +3,7 @@ package project
 const (
 	// Format constants
 	formatJSON    = "json"
+	formatYAML    = "yaml"
 	formatDetails = "details"
 	formatTable   = "table"
 
@@ -17,4 +18,7 @@ const (
 	ownerMaxLength      = 13
 	fieldsTableWidth    = 45
 	itemsTableWidth     = 65
+
+	// File permissions
+	dirPerm = 0o755
 )

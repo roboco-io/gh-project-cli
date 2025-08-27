@@ -136,7 +136,7 @@ func TestProjectServiceMethods(t *testing.T) {
 			Title:   "Test Project",
 		}
 
-		project, err := service.CreateProject(ctx, input)
+		project, err := service.CreateProject(ctx, &input)
 		assert.Error(t, err)
 		assert.Nil(t, project)
 	})
