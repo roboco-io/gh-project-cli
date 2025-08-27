@@ -38,6 +38,8 @@ https://docs.github.com/en/issues/planning-and-tracking-with-projects`,
 	cmd.AddCommand(NewLinkCmd())
 	cmd.AddCommand(NewExportCmd())
 	cmd.AddCommand(NewImportCmd())
+	cmd.AddCommand(NewWorkflowCmd())
+	cmd.AddCommand(NewTemplateCmd())
 
 	return cmd
 }
