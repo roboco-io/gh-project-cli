@@ -1,10 +1,16 @@
 package item
 
 import (
+	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"github.com/roboco-io/gh-project-cli/internal/api"
+	"github.com/roboco-io/gh-project-cli/internal/auth"
+	"github.com/roboco-io/gh-project-cli/internal/service"
 )
 
 // NewUpdateBulkCmd creates the update-bulk command
@@ -35,54 +41,8 @@ Examples:
   # Update all items matching a filter
   ghp item update-bulk myorg/123 --filter "assignee:@me" --field "Priority" --value "High"`,
 		Args: cobra.ExactArgs(1),
-		RunE: func(_ *cobra.Command, args []string) error {
-			projectID := args[0]
-
-			// Validate required flags
-			if fieldName == "" || value == "" {
-				return fmt.Errorf("--field and --value are required")
-			}
-
-			if filter == "" && items == "" {
-				return fmt.Errorf("either --filter or --items must be specified")
-			}
-
-			var itemsToUpdate []string
-
-			// Handle filter
-			if filter != "" {
-				filtered, err := getItemsByFilter(projectID, filter)
-				if err != nil {
-					return fmt.Errorf("failed to get items by filter: %w", err)
-				}
-				itemsToUpdate = append(itemsToUpdate, filtered...)
-			}
-
-			// Handle item range
-			if items != "" {
-				itemRange, err := parseNumberRange(items)
-				if err != nil {
-					return fmt.Errorf("invalid item range: %w", err)
-				}
-				itemsToUpdate = append(itemsToUpdate, itemRange...)
-			}
-
-			// Remove duplicates
-			itemsToUpdate = removeDuplicates(itemsToUpdate)
-
-			fmt.Printf("Updating %d items in project %s...\n", len(itemsToUpdate), projectID)
-			fmt.Printf("Setting field '%s' to '%s'\n\n", fieldName, value)
-
-			// Update items
-			successCount := 0
-			for _, item := range itemsToUpdate {
-				// TODO: Implement actual GraphQL API call to update item field
-				fmt.Printf("Updating item: %s\n", item)
-				successCount++
-			}
-
-			fmt.Printf("\n✓ Successfully updated %d items\n", successCount)
-			return nil
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runUpdateBulk(cmd.Context(), args[0], filter, items, fieldName, value)
 		},
 	}
 
@@ -97,20 +57,93 @@ Examples:
 	return cmd
 }
 
-// getItemsByFilter retrieves items matching a filter
-func getItemsByFilter(_, filter string) ([]string, error) {
-	// Parse filter string
-	parts := strings.Split(filter, ":")
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid filter format, expected 'key:value'")
+func runUpdateBulk(ctx context.Context, projectRef, filter, items, fieldName, value string) error {
+	// Validate required flags
+	if fieldName == "" || value == "" {
+		return fmt.Errorf("--field and --value are required")
 	}
 
-	filterType := strings.TrimSpace(parts[0])
-	filterValue := strings.TrimSpace(parts[1])
+	if filter == "" && items == "" {
+		return fmt.Errorf("either --filter or --items must be specified")
+	}
 
-	// TODO: Implement GraphQL query to get items by filter
-	// This is a placeholder implementation
-	fmt.Printf("Filtering items by %s = %s\n", filterType, filterValue)
+	// Parse project reference (owner/number)
+	parts := strings.Split(projectRef, "/")
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid project format: %s (expected owner/number)", projectRef)
+	}
 
-	return []string{}, nil
+	owner := parts[0]
+	projectNumber, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return fmt.Errorf("invalid project number: %s", parts[1])
+	}
+
+	// Initialize authentication
+	authManager := auth.NewAuthManager()
+	token, err := authManager.GetValidatedToken()
+	if err != nil {
+		return fmt.Errorf("authentication failed: %w", err)
+	}
+
+	// Create client and services
+	client := api.NewClient(token)
+	itemService := service.NewItemService(client)
+	projectService := service.NewProjectService(client)
+
+	// Get project to get project ID
+	project, err := projectService.GetProjectWithOwnerDetection(ctx, owner, projectNumber)
+	if err != nil {
+		return fmt.Errorf("failed to get project: %w", err)
+	}
+
+	var itemsToUpdate []string
+
+	// Handle filter
+	if filter != "" {
+		filtered, filterErr := itemService.GetItemsByFilter(ctx, project.ID, filter)
+		if filterErr != nil {
+			return fmt.Errorf("failed to get items by filter: %w", filterErr)
+		}
+		itemsToUpdate = append(itemsToUpdate, filtered...)
+	}
+
+	// Handle item range
+	if items != "" {
+		itemRange, rangeErr := service.ParseNumberRange(items)
+		if rangeErr != nil {
+			return fmt.Errorf("invalid item range: %w", rangeErr)
+		}
+		itemsToUpdate = append(itemsToUpdate, itemRange...)
+	}
+
+	// Remove duplicates
+	itemsToUpdate = service.RemoveDuplicates(itemsToUpdate)
+
+	fmt.Printf("Updating %d items in project %s...\n", len(itemsToUpdate), projectRef)
+	fmt.Printf("Setting field '%s' to '%s'\n\n", fieldName, value)
+
+	// Update items using service
+	input := service.BulkUpdateInput{
+		ProjectID: project.ID,
+		ItemIDs:   itemsToUpdate,
+		FieldName: fieldName,
+		Value:     value,
+	}
+
+	result, err := itemService.BulkUpdateItems(ctx, input)
+	if err != nil {
+		return fmt.Errorf("failed to update items: %w", err)
+	}
+
+	fmt.Printf("\n✅ Successfully updated %d items", result.Updated)
+	if result.Failed > 0 {
+		fmt.Printf(" (%d failed)", result.Failed)
+		for _, errMsg := range result.Errors {
+			fmt.Printf("\n  Error: %s", errMsg)
+		}
+	}
+	fmt.Printf("\n")
+
+	return nil
 }

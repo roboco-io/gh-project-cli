@@ -98,9 +98,8 @@ func runCreate(ctx context.Context, opts *CreateOptions) error {
 	projectService := service.NewProjectService(client)
 	viewService := service.NewViewService(client)
 
-	// Get project to validate access and get project ID
-	isOrg := false // TODO: Get this from flag properly
-	project, err := projectService.GetProject(ctx, owner, projectNumber, isOrg)
+	// Get project to validate access and get project ID (with automatic owner detection)
+	project, err := projectService.GetProjectWithOwnerDetection(ctx, owner, projectNumber)
 	if err != nil {
 		return fmt.Errorf("failed to get project: %w", err)
 	}

@@ -517,9 +517,9 @@ func runTemplateDelete(ctx context.Context, templateID string, force bool) error
 	if !force {
 		fmt.Printf("Are you sure you want to delete template %s? This action cannot be undone. (y/N): ", templateID)
 		var response string
-		fmt.Scanln(&response)
+		_, _ = fmt.Scanln(&response)
 		if response != "y" && response != "Y" {
-			fmt.Println("Template deletion cancelled")
+			fmt.Println("Template deletion canceled")
 			return nil
 		}
 	}

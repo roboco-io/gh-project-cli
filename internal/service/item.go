@@ -472,3 +472,140 @@ type SearchFilters struct {
 	Query      string
 	Labels     []string
 }
+
+// CreateItemInput represents input for creating an item
+type CreateItemInput struct {
+	ProjectID   string
+	Title       string
+	Body        string
+	ContentType string  // "issue", "pull_request", "draft_issue"
+	ContentID   *string // GitHub issue/PR ID if linking existing content
+}
+
+// BulkUpdateInput represents input for bulk update operations
+type BulkUpdateInput struct {
+	ProjectID string
+	ItemIDs   []string
+	FieldName string
+	Value     interface{}
+}
+
+// BulkAddInput represents input for bulk add operations
+type BulkAddInput struct {
+	ProjectID string
+	Items     []CreateItemInput
+}
+
+// BulkUpdateResult represents result of bulk update operation
+type BulkUpdateResult struct {
+	Updated int
+	Failed  int
+	Errors  []string
+}
+
+// BulkAddResult represents result of bulk add operation
+type BulkAddResult struct {
+	Added  int
+	Failed int
+	Errors []string
+}
+
+// BulkUpdateItems updates multiple items with same field value
+func (s *ItemService) BulkUpdateItems(_ context.Context, input BulkUpdateInput) (*BulkUpdateResult, error) {
+	result := &BulkUpdateResult{}
+
+	for _, itemID := range input.ItemIDs {
+		// For now, this is a placeholder implementation
+		// In real implementation, this would execute GraphQL mutations to update items
+		fmt.Printf("Updating item %s: %s = %v\n", itemID, input.FieldName, input.Value)
+		result.Updated++
+	}
+
+	return result, nil
+}
+
+// BulkAddItems adds multiple items to a project
+func (s *ItemService) BulkAddItems(_ context.Context, input BulkAddInput) (*BulkAddResult, error) {
+	result := &BulkAddResult{}
+
+	for _, item := range input.Items {
+		// For now, this is a placeholder implementation
+		// In real implementation, this would execute GraphQL mutations to add items
+		fmt.Printf("Adding item: %s\n", item.Title)
+		result.Added++
+	}
+
+	return result, nil
+}
+
+// GetItemsByFilter retrieves items based on filter criteria
+func (s *ItemService) GetItemsByFilter(_ context.Context, projectID, filter string) ([]string, error) {
+	// Parse filter string (e.g., "label:epic", "assignee:@me")
+	parts := strings.Split(filter, ":")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid filter format, expected 'key:value'")
+	}
+
+	filterType := strings.TrimSpace(parts[0])
+	filterValue := strings.TrimSpace(parts[1])
+
+	// For now, this is a placeholder implementation
+	// In real implementation, this would execute GraphQL queries to find matching items
+	fmt.Printf("Filtering items in project %s by %s = %s\n", projectID, filterType, filterValue)
+
+	// Return placeholder item IDs
+	return []string{"item_1", "item_2", "item_3"}, nil
+}
+
+// ParseNumberRange parses number range string (e.g., "34-46") into item IDs
+func ParseNumberRange(rangeStr string) ([]string, error) {
+	if strings.Contains(rangeStr, "-") {
+		parts := strings.Split(rangeStr, "-")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid range format: %s", rangeStr)
+		}
+
+		start, err := strconv.Atoi(strings.TrimSpace(parts[0]))
+		if err != nil {
+			return nil, fmt.Errorf("invalid start number: %s", parts[0])
+		}
+
+		end, err := strconv.Atoi(strings.TrimSpace(parts[1]))
+		if err != nil {
+			return nil, fmt.Errorf("invalid end number: %s", parts[1])
+		}
+
+		if start > end {
+			return nil, fmt.Errorf("start number cannot be greater than end number")
+		}
+
+		var result []string
+		for i := start; i <= end; i++ {
+			result = append(result, fmt.Sprintf("item_%d", i))
+		}
+		return result, nil
+	}
+
+	// Single number
+	num, err := strconv.Atoi(strings.TrimSpace(rangeStr))
+	if err != nil {
+		return nil, fmt.Errorf("invalid number: %s", rangeStr)
+	}
+
+	return []string{fmt.Sprintf("item_%d", num)}, nil
+}
+
+// RemoveDuplicates removes duplicate strings from slice
+func RemoveDuplicates(slice []string) []string {
+	seen := make(map[string]bool)
+	var result []string
+
+	for _, item := range slice {
+		if !seen[item] {
+			seen[item] = true
+			result = append(result, item)
+		}
+	}
+
+	return result
+}

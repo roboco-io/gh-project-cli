@@ -80,7 +80,7 @@ func runEdit(ctx context.Context, opts *EditOptions) error {
 	projectService := service.NewProjectService(client)
 
 	// Get project details to find field ID
-	project, err := projectService.GetProject(ctx, projectOwner, projectNumber, false) // TODO: detect org vs user
+	project, err := projectService.GetProjectWithOwnerDetection(ctx, projectOwner, projectNumber)
 	if err != nil {
 		return fmt.Errorf("failed to get project: %w", err)
 	}

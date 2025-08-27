@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/shurcooL/graphql"
@@ -188,9 +189,45 @@ func (c *Client) retryOperation(operation func() error) error {
 }
 
 // isRetryableError determines if an error should trigger a retry
-func (c *Client) isRetryableError(_ error) bool {
-	// TODO: Implement logic to identify retryable errors
-	// e.g., rate limiting, temporary network errors, etc.
+func (c *Client) isRetryableError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := err.Error()
+
+	// Network-related errors that are often temporary
+	retryableErrors := []string{
+		"connection refused",
+		"connection reset",
+		"connection timeout",
+		"timeout",
+		"temporary failure",
+		"service unavailable",
+		"bad gateway",
+		"gateway timeout",
+		"rate limit",
+		"too many requests",
+		"network is unreachable",
+		"no such host",
+	}
+
+	// Check for retryable error patterns
+	errStrLower := strings.ToLower(errStr)
+	for _, pattern := range retryableErrors {
+		if strings.Contains(errStrLower, pattern) {
+			return true
+		}
+	}
+
+	// Check for specific HTTP status codes that indicate retryable errors
+	if strings.Contains(errStrLower, "502") || // Bad Gateway
+		strings.Contains(errStrLower, "503") || // Service Unavailable
+		strings.Contains(errStrLower, "504") || // Gateway Timeout
+		strings.Contains(errStrLower, "429") { // Too Many Requests
+		return true
+	}
+
 	return false
 }
 

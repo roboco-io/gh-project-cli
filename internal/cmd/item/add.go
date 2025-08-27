@@ -153,7 +153,7 @@ func runAdd(ctx context.Context, opts *AddOptions) error {
 	}
 
 	// Get project details to obtain project ID
-	project, err := projectService.GetProject(ctx, projectOwner, projectNumber, false) // TODO: detect org vs user
+	project, err := projectService.GetProjectWithOwnerDetection(ctx, projectOwner, projectNumber)
 	if err != nil {
 		return fmt.Errorf("failed to get project: %w", err)
 	}

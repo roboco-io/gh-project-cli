@@ -6,6 +6,15 @@ import (
 	"time"
 )
 
+const (
+	// defaultIterationDays is the default duration for iterations in days
+	defaultIterationDays = 14
+	// daysPerWeek is the number of days in a week
+	daysPerWeek = 7
+	// daysPerMonth is an approximate number of days per month
+	daysPerMonth = 30
+)
+
 // Field creation mutations and queries
 
 // CreateFieldMutation represents the createProjectV2Field mutation
@@ -229,7 +238,7 @@ func ValidSingleSelectColors() []string {
 // parseDuration parses duration string like "2w", "1m" into days
 func parseDuration(duration string) int {
 	if duration == "" {
-		return 14 // Default 2 weeks
+		return defaultIterationDays // Default 2 weeks
 	}
 
 	duration = strings.ToLower(strings.TrimSpace(duration))
@@ -249,17 +258,17 @@ func parseDuration(duration string) int {
 
 	num, err := strconv.Atoi(numStr)
 	if err != nil || num <= 0 {
-		return 14 // Default fallback
+		return defaultIterationDays // Default fallback
 	}
 
 	switch unit {
 	case "d", "day", "days":
 		return num
 	case "w", "week", "weeks":
-		return num * 7
+		return num * daysPerWeek
 	case "m", "month", "months":
-		return num * 30
+		return num * daysPerMonth
 	default:
-		return 14 // Default fallback
+		return defaultIterationDays // Default fallback
 	}
 }

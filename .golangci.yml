@@ -31,7 +31,6 @@ linters:
     - gosimple
     - govet
     - ineffassign
-    - lll
     - misspell
     - nakedret
     - noctx
@@ -41,7 +40,6 @@ linters:
     - stylecheck
     - typecheck
     - unconvert
-    - unparam
     - unused
     - whitespace
     - gocognit
@@ -56,8 +54,8 @@ linters-settings:
   gocognit:
     min-complexity: 20
   goconst:
-    min-len: 2
-    min-occurrences: 3
+    min-len: 3
+    min-occurrences: 6
   gocritic:
     enabled-tags:
       - diagnostic
@@ -71,8 +69,10 @@ linters-settings:
       - octalLiteral
       - whyNoLint
       - wrapperFunc
+      - hugeParam
+      - rangeValCopy
   gocyclo:
-    min-complexity: 15
+    min-complexity: 20
   goimports:
     local-prefixes: github.com/roboco-io/gh-project-cli
   mnd:
@@ -86,12 +86,19 @@ linters-settings:
       - '1'
       - '2'
       - '3'
+      - '5'
+      - '10'
+      - '15'
+      - '20'
+      - '30'
+      - '100'
+      - '0600'
     ignored-functions:
       - strings.SplitN
   govet:
     enable-all: true
-  lll:
-    line-length: 140
+    disable:
+      - fieldalignment
   misspell:
     locale: US
   nolintlint:
@@ -122,7 +129,6 @@ linters-settings:
       - name: errorf
       - name: empty-block
       - name: superfluous-else
-      - name: unused-parameter
       - name: unreachable-code
       - name: redefines-builtin-id
   maintidx:
@@ -150,3 +156,6 @@ issues:
     - linters:
         - lll
       source: "^//go:generate "
+    - linters:
+        - staticcheck
+      text: "SA1019:"

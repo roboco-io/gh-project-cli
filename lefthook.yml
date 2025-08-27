@@ -1,23 +1,60 @@
 # lefthook.yml - Git hooks configuration
+# Ensures code quality by running lint and tests before commits
+
+# Skip hooks in CI environment
+skip_output:
+  - meta
+  - summary
 
 pre-commit:
-  parallel: true
+  parallel: false  # Run sequentially to ensure each step passes
   commands:
+    # Step 1: Format code
     fmt:
       glob: "*.go"
-      run: gofmt -w {staged_files} && git add {staged_files}
+      run: |
+        echo "📝 Formatting Go files..."
+        gofmt -s -w {staged_files}
+        goimports -w {staged_files} 2>/dev/null || true
+        git add {staged_files}
+      
+    # Step 2: Tidy modules if go.mod changed
+    mod-tidy:
+      glob: "go.{mod,sum}"
+      run: |
+        echo "📦 Tidying Go modules..."
+        go mod tidy
+        git add go.mod go.sum
     
+    # Step 3: Run linter (strict mode)
     lint:
       glob: "*.go"
-      run: golangci-lint run --fix ./... && git add {staged_files}
+      run: |
+        echo "🔍 Running linter..."
+        golangci-lint run --timeout=5m ./...
+      fail_text: |
+        ❌ Linting failed! Fix the issues before committing.
+        Run 'golangci-lint run ./...' to see all issues.
     
+    # Step 4: Run unit tests
     test:
       glob: "*.go"
-      run: go test -short -race ./...
+      run: |
+        echo "🧪 Running unit tests..."
+        go test -short -race -timeout=3m ./...
+      fail_text: |
+        ❌ Tests failed! Fix the failing tests before committing.
+        Run 'go test ./...' to see test failures.
     
-    mod-tidy:
-      glob: "go.mod"
-      run: go mod tidy && git add go.mod go.sum
+    # Step 5: Check build
+    build:
+      glob: "*.go"
+      run: |
+        echo "🔨 Checking build..."
+        go build -o /tmp/ghp-test ./cmd/ghp
+        rm -f /tmp/ghp-test
+      fail_text: |
+        ❌ Build failed! Fix compilation errors before committing.
 
 pre-push:
   parallel: false
@@ -36,9 +73,9 @@ commit-msg:
     check-commit-message:
       run: |
         # Check commit message format
-        # Format: type(scope): description
+        # Format: type(scope): description  
         # Types: feat, fix, docs, style, refactor, test, chore
-        if ! grep -qE "^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .{1,100}$" "$1"; then
+        if ! head -1 {1} | grep -qE "^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .{1,100}$"; then
           echo "Commit message format is invalid!"
           echo "Format: type(scope): description"
           echo "Types: feat, fix, docs, style, refactor, test, chore"

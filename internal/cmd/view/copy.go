@@ -92,9 +92,8 @@ func runCopy(ctx context.Context, opts *CopyOptions) error {
 			return fmt.Errorf("invalid project number: %s", parts[1])
 		}
 
-		// Get target project
-		isOrg := false // TODO: Get this from flag properly
-		project, getErr := projectService.GetProject(ctx, owner, projectNumber, isOrg)
+		// Get target project (with automatic owner detection)
+		project, getErr := projectService.GetProjectWithOwnerDetection(ctx, owner, projectNumber)
 		if getErr != nil {
 			return fmt.Errorf("failed to get target project: %w", getErr)
 		}

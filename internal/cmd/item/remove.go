@@ -69,7 +69,7 @@ func runRemove(ctx context.Context, opts *RemoveOptions) error {
 	projectService := service.NewProjectService(client)
 
 	// Get project details
-	project, err := projectService.GetProject(ctx, projectOwner, projectNumber, false) // TODO: detect org vs user
+	project, err := projectService.GetProjectWithOwnerDetection(ctx, projectOwner, projectNumber)
 	if err != nil {
 		return fmt.Errorf("failed to get project: %w", err)
 	}
