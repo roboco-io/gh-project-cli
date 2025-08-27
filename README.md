@@ -86,7 +86,7 @@ brew install ghp-cli
 
 ### Go Install
 ```bash
-go install github.com/roboco-io/gh-project-cli@latest
+go install github.com/roboco-io/gh-project-cli/cmd/ghp@latest
 ```
 
 ### Download Binary

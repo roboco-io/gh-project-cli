@@ -16,11 +16,13 @@ import (
 // CreateOptions holds options for the create command
 type CreateOptions struct {
 	ProjectRef string
+	ProjectID  string
 	Owner      string
 	Name       string
 	FieldType  string
 	Format     string
 	Options    []string
+	Duration   string
 	Number     int
 	Org        bool
 }
@@ -30,7 +32,7 @@ func NewCreateCmd() *cobra.Command {
 	opts := &CreateOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "create <owner>/<number> <name> <type>",
+		Use:   "create [owner/number] [name] [type]",
 		Short: "Create a new project field",
 		Long: `Create a new custom field in a GitHub Project.
 
@@ -45,19 +47,28 @@ Field Types:
   iteration    - Iteration field for sprint/cycle planning
 
 For single select fields, you can provide initial options using --options.
+For iteration fields, you can specify duration using --duration.
 
 Examples:
+  # Traditional syntax
   ghp field create octocat/123 "Priority" text
+  
+  # New syntax with flags (Issue #18)
+  ghp field create --project-id PROJECT_ID --name "Priority" --type single-select --options "Critical,High,Medium,Low"
+  ghp field create --project-id PROJECT_ID --name "Sprint" --type iteration --duration 2w
   ghp field create octocat/123 "Story Points" number
   ghp field create octocat/123 "Due Date" date
   ghp field create octocat/123 "Status" single_select --options "Todo,In Progress,Done"
   ghp field create --org myorg/456 "Sprint" iteration`,
 
-		Args: cobra.ExactArgs(3),
+		Args: cobra.MaximumNArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			opts.ProjectRef = args[0]
-			opts.Name = args[1]
-			opts.FieldType = args[2]
+			// Support both traditional args and new flag-based syntax
+			if len(args) == 3 {
+				opts.ProjectRef = args[0]
+				opts.Name = args[1]
+				opts.FieldType = args[2]
+			}
 			opts.Format = cmd.Flag("format").Value.String()
 			return runCreate(cmd.Context(), opts)
 		},
@@ -66,19 +77,41 @@ Examples:
 	cmd.Flags().BoolVar(&opts.Org, "org", false, "Project belongs to an organization")
 	cmd.Flags().StringSliceVar(&opts.Options, "options", []string{}, "Options for single select field (comma-separated)")
 
+	// New flags for Issue #18 syntax
+	cmd.Flags().StringVar(&opts.ProjectID, "project-id", "", "Project ID (alternative to owner/number)")
+	cmd.Flags().StringVar(&opts.Name, "name", "", "Field name")
+	cmd.Flags().StringVar(&opts.FieldType, "type", "", "Field type (text, number, date, single_select, iteration)")
+	cmd.Flags().StringVar(&opts.Duration, "duration", "", "Duration for iteration field (e.g., 2w, 1m)")
+
 	return cmd
 }
 
 func runCreate(ctx context.Context, opts *CreateOptions) error {
-	// Parse project reference
+	// Support both traditional args and new flag-based syntax
 	var err error
-	if strings.Contains(opts.ProjectRef, "/") {
-		opts.Owner, opts.Number, err = service.ParseProjectReference(opts.ProjectRef)
-		if err != nil {
-			return fmt.Errorf("invalid project reference: %w", err)
+	var projectID string
+
+	if opts.ProjectID != "" {
+		// New syntax: --project-id flag
+		projectID = opts.ProjectID
+		if opts.Name == "" {
+			return fmt.Errorf("--name is required when using --project-id")
+		}
+		if opts.FieldType == "" {
+			return fmt.Errorf("--type is required when using --project-id")
+		}
+	} else if opts.ProjectRef != "" {
+		// Traditional syntax: positional args
+		if strings.Contains(opts.ProjectRef, "/") {
+			opts.Owner, opts.Number, err = service.ParseProjectReference(opts.ProjectRef)
+			if err != nil {
+				return fmt.Errorf("invalid project reference: %w", err)
+			}
+		} else {
+			return fmt.Errorf("project reference must be in format owner/number")
 		}
 	} else {
-		return fmt.Errorf("project reference must be in format owner/number")
+		return fmt.Errorf("either project reference (owner/number) or --project-id must be provided")
 	}
 
 	// Validate field name
@@ -104,18 +137,31 @@ func runCreate(ctx context.Context, opts *CreateOptions) error {
 	fieldService := service.NewFieldService(client)
 	projectService := service.NewProjectService(client)
 
-	// Get project to verify it exists and get project ID
-	project, err := projectService.GetProject(ctx, opts.Owner, opts.Number, opts.Org)
-	if err != nil {
-		return fmt.Errorf("failed to get project: %w", err)
+	var project *graphql.ProjectV2
+
+	if opts.ProjectID != "" {
+		// New syntax: use project ID directly
+		// For new syntax, we'll create a mock project for output
+		project = &graphql.ProjectV2{
+			ID:    projectID,
+			Title: fmt.Sprintf("Project %s", projectID),
+		}
+	} else {
+		// Traditional syntax: get project by owner/number
+		project, err = projectService.GetProject(ctx, opts.Owner, opts.Number, opts.Org)
+		if err != nil {
+			return fmt.Errorf("failed to get project: %w", err)
+		}
+		projectID = project.ID
 	}
 
 	// Create field
 	input := service.CreateFieldInput{
-		ProjectID:           project.ID,
+		ProjectID:           projectID,
 		Name:                opts.Name,
 		DataType:            dataType,
 		SingleSelectOptions: opts.Options,
+		Duration:            opts.Duration,
 	}
 
 	field, err := fieldService.CreateField(ctx, input)

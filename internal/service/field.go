@@ -45,6 +45,7 @@ type CreateFieldInput struct {
 	Name                string
 	DataType            graphql.ProjectV2FieldDataType
 	SingleSelectOptions []string
+	Duration            string
 }
 
 // UpdateFieldInput represents input for updating a field
@@ -86,6 +87,7 @@ func (s *FieldService) CreateField(ctx context.Context, input CreateFieldInput) 
 		Name:                input.Name,
 		DataType:            input.DataType,
 		SingleSelectOptions: input.SingleSelectOptions,
+		Duration:            input.Duration,
 	})
 
 	var mutation graphql.CreateFieldMutation

@@ -13,7 +13,6 @@ import (
 	"github.com/roboco-io/gh-project-cli/internal/cmd/item"
 	"github.com/roboco-io/gh-project-cli/internal/cmd/project"
 	"github.com/roboco-io/gh-project-cli/internal/cmd/view"
-	"github.com/roboco-io/gh-project-cli/internal/cmd/workflow"
 )
 
 var (
@@ -77,7 +76,6 @@ Example:
 	cmd.AddCommand(item.NewItemCmd())
 	cmd.AddCommand(project.NewProjectCmd())
 	cmd.AddCommand(view.NewViewCmd())
-	cmd.AddCommand(workflow.NewWorkflowCmd())
 
 	// Initialize config
 	cobra.OnInitialize(initConfig)

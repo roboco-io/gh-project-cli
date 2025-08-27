@@ -1,6 +1,10 @@
 package graphql
 
-import "time"
+import (
+	"strconv"
+	"strings"
+	"time"
+)
 
 // Field creation mutations and queries
 
@@ -52,6 +56,7 @@ type CreateFieldInput struct {
 	Name                string                 `json:"name"`
 	DataType            ProjectV2FieldDataType `json:"dataType"`
 	SingleSelectOptions []string               `json:"singleSelectOptions,omitempty"`
+	Duration            string                 `json:"duration,omitempty"`
 }
 
 type UpdateFieldInput struct {
@@ -98,6 +103,13 @@ func BuildCreateFieldVariables(input CreateFieldInput) map[string]interface{} {
 			}
 		}
 		inputMap["singleSelectOptions"] = options
+	}
+
+	// Add iteration field configuration
+	if input.DataType == ProjectV2FieldDataTypeIteration && input.Duration != "" {
+		inputMap["iterationSetting"] = map[string]interface{}{
+			"duration": parseDuration(input.Duration),
+		}
 	}
 
 	return map[string]interface{}{
@@ -211,5 +223,43 @@ func ValidSingleSelectColors() []string {
 		SingleSelectColorBlue,
 		SingleSelectColorPurple,
 		SingleSelectColorPink,
+	}
+}
+
+// parseDuration parses duration string like "2w", "1m" into days
+func parseDuration(duration string) int {
+	if duration == "" {
+		return 14 // Default 2 weeks
+	}
+
+	duration = strings.ToLower(strings.TrimSpace(duration))
+
+	// Handle numeric part and unit
+	var numStr string
+	var unit string
+
+	for i, char := range duration {
+		if char >= '0' && char <= '9' {
+			numStr += string(char)
+		} else {
+			unit = duration[i:]
+			break
+		}
+	}
+
+	num, err := strconv.Atoi(numStr)
+	if err != nil || num <= 0 {
+		return 14 // Default fallback
+	}
+
+	switch unit {
+	case "d", "day", "days":
+		return num
+	case "w", "week", "weeks":
+		return num * 7
+	case "m", "month", "months":
+		return num * 30
+	default:
+		return 14 // Default fallback
 	}
 }

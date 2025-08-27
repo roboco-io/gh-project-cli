@@ -14,11 +14,15 @@ import (
 
 // CreateOptions holds options for the create command
 type CreateOptions struct {
-	Title   string
-	OwnerID string
-	Format  string
-	Org     bool
-	Web     bool
+	Title       string
+	Description string
+	Readme      string
+	Visibility  string
+	Repository  string
+	OwnerID     string
+	Format      string
+	Org         bool
+	Web         bool
 }
 
 // NewCreateCmd creates the create command
@@ -31,9 +35,11 @@ func NewCreateCmd() *cobra.Command {
 		Long: `Create a new project for a user or organization.
 
 Examples:
-  ghp project create "My Project"                    # Create project with title
-  ghp project create --title "My Project"           # Create project with flag
-  ghp project create "Sprint Planning" --org        # Create org project`,
+  ghp project create "My Project"                           # Basic project creation
+  ghp project create "My Project" --description "A project" # With description
+  ghp project create "My Project" --readme "Detailed info"  # With README
+  ghp project create "My Project" --visibility private      # Private project
+  ghp project create "My Project" --repo owner/repo         # Link to repository`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runCreate(cmd.Context(), opts, args)
@@ -41,6 +47,10 @@ Examples:
 	}
 
 	cmd.Flags().StringVarP(&opts.Title, "title", "t", "", "Project title")
+	cmd.Flags().StringVar(&opts.Description, "description", "", "Project description")
+	cmd.Flags().StringVar(&opts.Readme, "readme", "", "Project README content")
+	cmd.Flags().StringVar(&opts.Visibility, "visibility", "public", "Project visibility (public, private)")
+	cmd.Flags().StringVar(&opts.Repository, "repo", "", "Link to repository (owner/repo)")
 	cmd.Flags().StringVar(&opts.OwnerID, "owner-id", "", "Owner ID (user or organization)")
 	cmd.Flags().BoolVar(&opts.Org, "org", false, "Create organization project")
 	cmd.Flags().BoolVar(&opts.Web, "web", false, "Open project in web browser after creation")
@@ -75,9 +85,13 @@ func runCreate(ctx context.Context, opts *CreateOptions, args []string) error {
 	projectService := service.NewProjectService(client)
 
 	// Create project
-	input := service.CreateProjectInput{
-		OwnerID: opts.OwnerID,
-		Title:   opts.Title,
+	input := &service.CreateProjectInput{
+		OwnerID:     opts.OwnerID,
+		Title:       opts.Title,
+		Description: opts.Description,
+		Readme:      opts.Readme,
+		Visibility:  opts.Visibility,
+		Repository:  opts.Repository,
 	}
 
 	project, err := projectService.CreateProject(ctx, input)

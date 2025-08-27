@@ -191,8 +191,12 @@ type RemoveItemFromProjectMutation struct {
 
 // CreateProjectInput represents input for creating a project
 type CreateProjectInput struct {
-	OwnerID string `json:"ownerId"`
-	Title   string `json:"title"`
+	OwnerID     string `json:"ownerId"`
+	Title       string `json:"title"`
+	Description string `json:"description,omitempty"`
+	Readme      string `json:"readme,omitempty"`
+	Visibility  string `json:"visibility,omitempty"`
+	Repository  string `json:"repository,omitempty"`
 }
 
 // UpdateProjectInput represents input for updating a project
@@ -230,12 +234,28 @@ type RemoveItemInput struct {
 // Variable Builders
 
 // BuildCreateProjectVariables builds variables for project creation
-func BuildCreateProjectVariables(input CreateProjectInput) map[string]interface{} {
+func BuildCreateProjectVariables(input *CreateProjectInput) map[string]interface{} {
+	inputMap := map[string]interface{}{
+		"ownerId": input.OwnerID,
+		"title":   input.Title,
+	}
+
+	// Add optional fields only if provided
+	if input.Description != "" {
+		inputMap["description"] = input.Description
+	}
+	if input.Readme != "" {
+		inputMap["readme"] = input.Readme
+	}
+	if input.Visibility != "" {
+		inputMap["visibility"] = input.Visibility
+	}
+	if input.Repository != "" {
+		inputMap["repository"] = input.Repository
+	}
+
 	return map[string]interface{}{
-		"input": map[string]interface{}{
-			"ownerId": input.OwnerID,
-			"title":   input.Title,
-		},
+		"input": inputMap,
 	}
 }
 
